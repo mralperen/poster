@@ -155,19 +155,30 @@ export async function updateProduct(
   const thumbnail =
     viewCount === 3 ? (views[1] ?? views[0]) : (views[0] ?? current.thumbnail);
 
+  // Kaydetmeden hemen önce tekrar oku — video yüklemesiyle yarışmayı önler
+  const latestProducts = await readAll();
+  const latest = latestProducts.find((p) => p.id === id) ?? current;
+
   const updated: Product = {
-    ...current,
+    ...latest,
     ...input,
     slug: nextSlug,
     viewCount,
     viewLabels,
-    views,
-    thumbnail,
+    views: input.viewCount && input.viewCount !== latest.viewCount ? views : latest.views,
+    thumbnail:
+      input.viewCount && input.viewCount !== latest.viewCount
+        ? thumbnail
+        : latest.thumbnail,
+    // Medya alanlarını form kaydı asla silmesin
+    video: latest.video,
     updatedAt: new Date().toISOString(),
   };
 
-  products[index] = updated;
-  await writeAll(products);
+  const writeIndex = latestProducts.findIndex((p) => p.id === id);
+  if (writeIndex === -1) throw new Error("Ürün bulunamadı.");
+  latestProducts[writeIndex] = updated;
+  await writeAll(latestProducts);
   return updated;
 }
 
@@ -241,6 +252,13 @@ export async function saveProductVideo(
   await writeBinaryFile(relativePath, buffer, contentType);
 
   const publicPath = `/uploads/${id}/video.${extension}`;
+  return registerProductVideoPath(id, publicPath);
+}
+
+export async function registerProductVideoPath(
+  id: string,
+  publicPath: string,
+): Promise<string> {
   const products = await readAll();
   const index = products.findIndex((p) => p.id === id);
   if (index === -1) throw new Error("Ürün bulunamadı.");

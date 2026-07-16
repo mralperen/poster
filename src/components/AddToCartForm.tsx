@@ -68,11 +68,13 @@ export function AddToCartForm({
                 value: "framed" as const,
                 hint: "Standart",
                 price: getUnitPrice(product.basePrice, "framed"),
+                discountLabel: null as string | null,
               },
               {
                 value: "frameless" as const,
-                hint: `−${FRAMELESS_DISCOUNT} ₺`,
+                hint: null,
                 price: getUnitPrice(product.basePrice, "frameless"),
+                discountLabel: `−${FRAMELESS_DISCOUNT} ₺`,
               },
             ] as const
           ).map((option) => {
@@ -84,15 +86,24 @@ export function AddToCartForm({
                 onClick={() => setFrameOption(option.value)}
                 className={`rounded-[8px] border px-3 py-3 text-left transition-colors ${
                   selected
-                    ? "border-amber-300/50 bg-amber-300/10"
+                    ? "border-amber-300/60 bg-amber-300/10"
                     : "border-white/12 bg-black/30 hover:border-white/25"
                 }`}
               >
                 <span className="block text-sm font-semibold text-white">
                   {FRAME_OPTION_LABELS[option.value]}
                 </span>
-                <span className="mt-0.5 block text-[11px] text-zinc-500">
-                  {option.hint} · {formatPrice(option.price)}
+                <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {option.discountLabel ? (
+                    <span className="rounded bg-amber-300/15 px-1.5 py-0.5 font-semibold text-amber-300">
+                      {option.discountLabel}
+                    </span>
+                  ) : (
+                    <span className="text-zinc-500">{option.hint}</span>
+                  )}
+                  <span className="font-medium text-zinc-300">
+                    {formatPrice(option.price)}
+                  </span>
                 </span>
               </button>
             );

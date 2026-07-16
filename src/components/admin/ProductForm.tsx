@@ -147,23 +147,80 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   const handleVideoChange = async (file: File | null) => {
     if (!file || mode !== "edit" || !product) return;
 
+    if (file.size > 80 * 1024 * 1024) {
+      setError("Video en fazla 80 MB olabilir.");
+      return;
+    }
+
+    const extension =
+      file.type === "video/webm"
+        ? "webm"
+        : file.type === "video/mp4"
+          ? "mp4"
+          : null;
+
+    if (!extension) {
+      setError("Sadece MP4 veya WebM yükleyebilirsiniz.");
+      return;
+    }
+
     setUploadingVideo(true);
     setError("");
     setSuccess("");
 
+    const pathname = `uploads/${product.id}/video.${extension}`;
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      let publicPath = "";
 
-      const res = await fetch(`/api/products/${product.id}/upload-video`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Video yüklenemedi.");
+      try {
+        const { upload } = await import("@vercel/blob/client");
+        const blob = await upload(pathname, file, {
+          access: "private",
+          handleUploadUrl: `/api/products/${product.id}/upload-video`,
+          multipart: true,
+          contentType: file.type,
+        });
 
-      setVideoSrc(`${String(data.path).split("?")[0]}?v=${Date.now()}`);
-      setSuccess("Ürün videosu yüklendi.");
+        const registerRes = await fetch(
+          `/api/products/${product.id}/upload-video`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "register",
+              pathname: blob.pathname || pathname,
+            }),
+          },
+        );
+        const registerData = await registerRes.json();
+        if (!registerRes.ok) {
+          throw new Error(registerData.error ?? "Video kaydı başarısız.");
+        }
+        publicPath = String(registerData.path ?? `/${pathname}`);
+      } catch (clientError) {
+        // Blob client upload yoksa / lokal: sunucu FormData yolu
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch(`/api/products/${product.id}/upload-video`, {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(
+            data.error ??
+              (clientError instanceof Error
+                ? clientError.message
+                : "Video yüklenemedi."),
+          );
+        }
+        publicPath = String(data.path);
+      }
+
+      setVideoSrc(`${publicPath.split("?")[0]}?v=${Date.now()}`);
+      setSuccess("Ürün videosu yüklendi. Ayrıca “Kaydet”e basmanıza gerek yok.");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Video yükleme hatası.");
@@ -176,6 +233,10 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     e.preventDefault();
     if (uploadingSlot !== null) {
       setError("Görsel yüklemesi bitmeden kaydetmeyin.");
+      return;
+    }
+    if (uploadingVideo) {
+      setError("Video yüklemesi bitmeden kaydetmeyin.");
       return;
     }
     setSaving(true);
@@ -231,6 +292,9 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       setUploadedViews(
         data.views.map((view: string) => `${view.split("?")[0]}?v=${Date.now()}`),
       );
+      if (typeof data.video === "string" && data.video) {
+        setVideoSrc(`${data.video.split("?")[0]}?v=${Date.now()}`);
+      }
       setSuccess("Değişiklikler kaydedildi.");
       router.refresh();
     } catch (err) {
@@ -363,8 +427,9 @@ export function ProductForm({ product, mode }: ProductFormProps) {
         {mode === "edit" && product && (
           <Section title="Ürün videosu">
             <p className="text-xs leading-5 text-zinc-500">
-              MP4 veya WebM (en fazla 80 MB). Mağazada ürün adının yanında Video
-              butonu görünür.
+              MP4 veya WebM (en fazla 80 MB). Video seçilir seçilmez yüklenir;
+              ayrıca “Kaydet”e basmanız gerekmez. Mağazada ürün adının yanında
+              Video butonu görünür.
             </p>
             {videoSrc ? (
               <video

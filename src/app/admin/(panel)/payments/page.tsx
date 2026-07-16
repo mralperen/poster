@@ -38,11 +38,11 @@ export default async function AdminPaymentsPage() {
         : "PAYTR_MERCHANT_ID, PAYTR_MERCHANT_KEY ve PAYTR_MERCHANT_SALT tanımlayın.",
     },
     {
-      label: "Test modu",
-      ok: true,
+      label: "Test / canlı mod",
+      ok: !testMode,
       detail: testMode
-        ? "PAYTR_TEST_MODE=1 — test işlemleri açık."
-        : "Canlı mod — gerçek tahsilat yapılır.",
+        ? "PAYTR_TEST_MODE=1 — demo/test açık. Canlı tahsilat için 0 yapın veya silin."
+        : "Canlı mod — gerçek kart tahsilatı yapılır.",
     },
     {
       label: "Canlı domain",
@@ -116,6 +116,46 @@ export default async function AdminPaymentsPage() {
             E-postalar
           </a>
         </p>
+      </div>
+
+      <div className="mt-6 rounded-[8px] border border-white/10 bg-white/[0.025] p-5">
+        <h2 className="text-sm font-semibold text-white">PayTR canlı moda geçiş</h2>
+        <ol className="mt-3 list-decimal space-y-2 pl-5 text-xs leading-6 text-zinc-400">
+          <li>
+            Vercel → Project → Settings → Environment Variables içinde{" "}
+            <code className="text-zinc-300">PAYTR_TEST_MODE</code> değerini{" "}
+            <code className="text-zinc-300">0</code> yapın veya değişkeni silin
+            (varsayılan zaten canlıdır).
+          </li>
+          <li>
+            PayTR Mağaza Paneli’nde canlı mağaza anahtarlarının (
+            <code className="text-zinc-300">MERCHANT_ID / KEY / SALT</code>)
+            Production env’e yazıldığından emin olun.
+          </li>
+          <li>
+            Bildirim URL:{" "}
+            <code className="break-all text-zinc-300">
+              {publicUrlConfigured
+                ? `${siteUrl}/api/paytr/callback`
+                : "https://theposterist.com/api/paytr/callback"}
+            </code>
+          </li>
+          <li>Env değişikliğinden sonra Vercel’de Redeploy alın.</li>
+          <li>
+            Küçük tutarlı gerçek bir test siparişiyle ödeme + callback + e-posta
+            akışını doğrulayın.
+          </li>
+        </ol>
+        {testMode ? (
+          <p className="mt-4 rounded-[8px] border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs text-amber-100">
+            Şu an test modundasınız. Canlı satış için yukarıdaki adımları tamamlayın.
+          </p>
+        ) : (
+          <p className="mt-4 rounded-[8px] border border-emerald-300/30 bg-emerald-300/10 px-3 py-2 text-xs text-emerald-100">
+            Canlı mod aktif. Gerçek tahsilat alınır — PayTR panelinin de canlı
+            olduğundan emin olun.
+          </p>
+        )}
       </div>
 
       <div className="mt-6 rounded-[8px] border border-amber-200/20 bg-amber-300/10 p-5">
