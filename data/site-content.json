@@ -1,0 +1,233 @@
+{
+  "general": {
+    "supportEmail": "destek@theposterist.com",
+    "supportPhone": "+90 850 000 00 00",
+    "companyLegalName": "The Posterist",
+    "businessAddress": "Ataşehir, 34758 İstanbul, Türkiye",
+    "taxOffice": "",
+    "taxNumber": "",
+    "shippingFee": 49,
+    "freeShippingThreshold": 500,
+    "bundleSecondPercent": 10,
+    "bundleThirdPercent": 15,
+    "campaignText": "2 posterde %10, 3+ posterde %15 set indirimi",
+    "paymentNotice": "Kart bilgileri The Posterist sunucusunda tutulmaz; ödeme PayTR güvenli ödeme ekranı üzerinden tamamlanır."
+  },
+  "home": {
+    "eyebrow": "3D lentiküler poster mağazası",
+    "title": "Açı değiştirdikçe başka bir sanat eseri ortaya çıkar.",
+    "description": "The Posterist, eldeki seçili poster koleksiyonlarını lensli lentiküler baskı deneyimiyle sunar. Satın almadan önce posteri sürükleyerek geçiş etkisini deneyebilirsiniz.",
+    "storyTitle": "Duvara asılan tek kare değil, hareket eden bir obje.",
+    "storyText": "Her poster A3 sabit ölçüde hazırlanır, görseller arası geçiş kontrol edilir ve korumalı ambalajla gönderilir. Koleksiyonlar hediye, stüdyo, ofis ve ev dekorasyonu için seçili kombinasyonlardan oluşur.",
+    "setTitle": "Birlikte daha iyi çalışan posterler",
+    "setDescription": "Farklı posterleri beraber alınca indirim otomatik uygulanır. Aynı üründen almak zorunda değilsiniz; koleksiyon hissini büyütmek için farklı eserleri eşleştirebilirsiniz.",
+    "guideItems": [
+      {
+        "title": "Sürükle",
+        "text": "Ürün görselini parmakla veya mouse ile sağa sola kaydırıp geçişi deneyin."
+      },
+      {
+        "title": "Set yap",
+        "text": "İkinci posterde %10, üç ve üzeri posterde %15 indirim otomatik açılır."
+      },
+      {
+        "title": "Güvenle teslim al",
+        "text": "Posterler sabit A3 ölçüde, çerçevesiz ve korumalı ambalajla gönderilir."
+      }
+    ],
+    "trustBadges": [
+      {
+        "title": "Sabit ölçü",
+        "text": "Tüm posterler A3 / 29,7 x 42 cm ölçüsünde hazırlanır."
+      },
+      {
+        "title": "Korumalı gönderim",
+        "text": "Lens yüzeyi çizilmeyi azaltacak paketleme ile korunur."
+      },
+      {
+        "title": "14 gün iade",
+        "text": "Standart ürünlerde teslimden itibaren 14 gün iade hakkı vardır."
+      },
+      {
+        "title": "PayTR ödeme",
+        "text": "Canlı satışta kart ödemesi PayTR güvenli ödeme altyapısıyla alınır."
+      }
+    ],
+    "reviews": [
+      {
+        "name": "Ece K.",
+        "meta": "Ev dekorasyonu",
+        "text": "Posterin açı değiştirince başka tabloya dönmesi misafirlerin ilk fark ettiği şey oldu."
+      },
+      {
+        "name": "Mert A.",
+        "meta": "Hediye siparişi",
+        "text": "Normal posterden daha özel hissettiriyor. Set indirimiyle iki farklı işi birlikte aldım."
+      },
+      {
+        "name": "Studio Nova",
+        "meta": "Ofis duvarı",
+        "text": "Minimal tasarımlı alanda hareket hissi verdiği için çok iyi durdu."
+      }
+    ]
+  },
+  "about": {
+    "eyebrow": "Hakkımızda",
+    "title": "Açı değiştiren posterleri daha erişilebilir hale getiriyoruz.",
+    "description": "The Posterist, klasik sanat ve çağdaş görselleri lentiküler baskı teknolojisiyle yeniden yorumlayan bir poster mağazasıdır.",
+    "paragraphs": [
+      "Amacımız, duvara asılan bir posteri tek kare olmaktan çıkarıp hareketli bir objeye dönüştürmek. Kullanıcı postere farklı açılardan baktığında farklı görseller görür; bu yüzden her ürün baskıdan önce geçiş, kontrast ve okunabilirlik açısından kontrol edilir.",
+      "Mağaza deneyiminde de aynı hissi korumak istiyoruz. Ürün sayfalarında posterleri parmakla veya mouse ile sürükleyebilir, fiziksel baskıdaki açı değişimini sipariş vermeden önce deneyebilirsiniz."
+    ],
+    "cards": [
+      {
+        "title": "Ne satıyoruz?",
+        "text": "2 veya 3 açılı, lensli 3D lentiküler sanat posterleri."
+      },
+      {
+        "title": "Kime uygun?",
+        "text": "Ev, ofis, kafe, stüdyo, galeri ve hediye arayan kullanıcılar."
+      },
+      {
+        "title": "Nasıl gönderiyoruz?",
+        "text": "Çerçevesiz, korumalı ambalajla ve takip bilgisiyle."
+      },
+      {
+        "title": "Neyi önemsiyoruz?",
+        "text": "Net geçiş, güçlü renk, kolay alışveriş ve güven veren destek."
+      }
+    ]
+  },
+  "shipping": {
+    "eyebrow": "Kargo",
+    "title": "Posterler korumalı ambalajla ve takip bilgisiyle gönderilir.",
+    "description": "Lentiküler baskı yüzeyi hassas olduğu için üretim sonrası paketleme ve teslimat süreci dikkatle yönetilir.",
+    "items": [
+      {
+        "title": "Hazırlık süresi",
+        "text": "Siparişler baskı ve kalite kontrol sürecinden geçerek genellikle 2-4 iş günü içinde kargoya teslim edilir."
+      },
+      {
+        "title": "Paketleme",
+        "text": "Posterler çizilmeyi ve kıvrılmayı azaltacak korumalı ambalajla gönderilir."
+      },
+      {
+        "title": "Kargo ücreti",
+        "text": "500 TL ve üzeri siparişlerde kargo ücretsizdir. Altındaki siparişlerde kargo bedeli sepet aşamasında gösterilir."
+      },
+      {
+        "title": "Teslimat takibi",
+        "text": "Kargoya verilen her sipariş için takip bilgisi paylaşılır. Teslimatta paket hasarlıysa tutanak tutulması önerilir."
+      }
+    ]
+  },
+  "returns": {
+    "eyebrow": "İade ve değişim",
+    "title": "İade sürecini açık, hızlı ve takip edilebilir tutuyoruz.",
+    "description": "Siparişinizle ilgili bir sorun olduğunda ürün durumunu ve teslimat tarihini birlikte kontrol ederek en uygun çözümü sunarız.",
+    "items": [
+      {
+        "title": "14 gün iade",
+        "text": "Standart ürünlerde teslim tarihinden itibaren 14 gün içinde iade talebi oluşturabilirsiniz."
+      },
+      {
+        "title": "Ürün durumu",
+        "text": "İade edilecek ürün kullanılmamış, zarar görmemiş ve mümkünse orijinal ambalajında olmalıdır."
+      },
+      {
+        "title": "Hasarlı teslimat",
+        "text": "Kargo hasarı fark ederseniz paketin fotoğrafını çekin ve teslimat günü içinde bizimle iletişime geçin."
+      }
+    ]
+  },
+  "faq": {
+    "eyebrow": "S.S.S.",
+    "title": "Sipariş vermeden önce akla gelen sorular.",
+    "description": "Lentiküler baskı, teslimat, iade ve toplu siparişler hakkında en sık sorulan konuları burada topladık.",
+    "items": [
+      {
+        "question": "3D lentiküler poster nedir?",
+        "answer": "Lentiküler poster, farklı açılardan bakıldığında farklı görseller gösteren özel lensli bir baskıdır. The Posterist posterlerinde bu etkiyi satın almadan önce ekranda sürükleyerek deneyebilirsiniz."
+      },
+      {
+        "question": "Posterler çerçeveli mi geliyor?",
+        "answer": "Posterler çerçevesiz ve korumalı ambalajla gönderilir. Standart satış ölçüsü A3 / 29,7 x 42 cm olarak hazırlanır."
+      },
+      {
+        "question": "Kargoya ne zaman verilir?",
+        "answer": "Siparişler üretim yoğunluğuna göre genellikle 2-4 iş günü içinde hazırlanır. Baskı tamamlandıktan sonra takip numarası paylaşılır."
+      },
+      {
+        "question": "İade yapabilir miyim?",
+        "answer": "Standart ürünlerde teslimden itibaren 14 gün içinde iade talebi oluşturabilirsiniz."
+      },
+      {
+        "question": "Renkler ekrandaki gibi olur mu?",
+        "answer": "Her ekranın parlaklık ve renk ayarı farklıdır. Baskı renkleri ekrandaki önizlemeye çok yakın hazırlanır, ancak küçük ton farklılıkları normaldir."
+      }
+    ]
+  },
+  "contact": {
+    "eyebrow": "İletişim",
+    "title": "Sipariş, toplu alım ve destek için bize yazın.",
+    "description": "Canlı satış öncesi destek kanalları burada netleşir. Sipariş ve kargo soruları için bize ulaşabilirsiniz.",
+    "cards": [
+      {
+        "title": "E-posta",
+        "value": "destek@theposterist.com",
+        "href": "mailto:destek@theposterist.com"
+      },
+      {
+        "title": "Telefon",
+        "value": "+90 850 000 00 00",
+        "href": "tel:+908500000000"
+      },
+      {
+        "title": "Adres",
+        "value": "Ataşehir, 34758 İstanbul, Türkiye",
+        "href": "/contact#adres"
+      },
+      {
+        "title": "Instagram",
+        "value": "@theposterist",
+        "href": "https://instagram.com/theposterist"
+      }
+    ],
+    "note": "Toplu sipariş taleplerinde adet, teslimat şehri ve kullanılacak alan bilgisini paylaşırsanız daha hızlı dönüş yapabiliriz."
+  },
+  "terms": {
+    "eyebrow": "Yasal",
+    "title": "Mesafeli satış sözleşmesi ve ön bilgilendirme",
+    "description": "theposterist.com üzerinden yapılan satışlara ilişkin tarafların hak ve yükümlülüklerini açıklar.",
+    "items": [
+      {
+        "title": "1. Satıcı bilgileri",
+        "text": "Satıcı: The Posterist. İletişim: destek@theposterist.com · +90 850 000 00 00. Adres: Ataşehir, 34758 İstanbul, Türkiye."
+      },
+      {
+        "title": "2. Sözleşmenin konusu",
+        "text": "İşbu sözleşme, Alıcının theposterist.com üzerinden elektronik ortamda sipariş verdiği lentiküler poster ürünlerinin satışı ve teslimatına ilişkin 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri uyarınca tarafların hak ve yükümlülüklerini düzenler."
+      },
+      {
+        "title": "3. Ürün ve fiyat",
+        "text": "Ürünlerin temel nitelikleri, satış fiyatı ve ödeme şekli sipariş özetinde ve ürün sayfasında gösterilir. Fiyatlara KDV dahildir; kargo bedeli sepet aşamasında ayrıca belirtilir."
+      },
+      {
+        "title": "4. Ödeme",
+        "text": "Ödemeler PayTR güvenli ödeme altyapısı üzerinden kart ile alınır. Kart bilgileri The Posterist sunucularında saklanmaz."
+      },
+      {
+        "title": "5. Teslimat",
+        "text": "Siparişler baskı ve kalite kontrol sonrası genellikle 2-4 iş günü içinde kargoya verilir. Teslimat süresi kargo firmasına ve teslimat adresine göre değişebilir. Ayrıntılar Kargo sayfasında yer alır."
+      },
+      {
+        "title": "6. Cayma hakkı",
+        "text": "Alıcı, ürünü teslim aldığı tarihten itibaren 14 gün içinde herhangi bir gerekçe göstermeksizin cayma hakkını kullanabilir. Cayma hakkının kullanımı ve iade koşulları İade sayfasında açıklanmıştır."
+      },
+      {
+        "title": "7. Uyuşmazlık",
+        "text": "Uyuşmazlık halinde Tüketici Hakem Heyetleri ve Tüketici Mahkemeleri yetkilidir. Alıcı, Ticaret Bakanlığı şikâyet platformunu da kullanabilir."
+      }
+    ]
+  }
+}

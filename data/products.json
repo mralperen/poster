@@ -1,0 +1,177 @@
+[
+  {
+    "id": "5ac1fd24-f2bb-4977-9725-63595a28122b",
+    "slug": "luffy-lenticular-poster",
+    "name": "Luffy Lenticular Poster",
+    "description": "Luffy Lenticular Mercekli Poster",
+    "category": "3D Lentiküler",
+    "badge": "3 açı",
+    "viewCount": 3,
+    "views": [
+      "/uploads/5ac1fd24-f2bb-4977-9725-63595a28122b/view-0.jpg",
+      "/uploads/5ac1fd24-f2bb-4977-9725-63595a28122b/view-1.jpg",
+      "/uploads/5ac1fd24-f2bb-4977-9725-63595a28122b/view-2.jpg"
+    ],
+    "viewLabels": [
+      "Sol görünüm",
+      "Orta görünüm",
+      "Sağ görünüm"
+    ],
+    "thumbnail": "/uploads/5ac1fd24-f2bb-4977-9725-63595a28122b/view-1.jpg",
+    "basePrice": 949,
+    "sizes": [
+      "A3",
+      "A2",
+      "A1"
+    ],
+    "sizePrices": {
+      "A3": 949,
+      "A2": 949,
+      "A1": 949
+    },
+    "featured": true,
+    "published": true,
+    "createdAt": "2026-06-15T00:16:57.610Z",
+    "updatedAt": "2026-06-15T00:16:58.065Z"
+  },
+  {
+    "id": "039b2d70-0e1e-46fa-8011-961aa6089387",
+    "slug": "attack-on-titan-lenticular-poster",
+    "name": "Attack On Titan Lenticular Poster",
+    "description": "Attack On Titan Lenticular Poster",
+    "category": "3D Lentiküler",
+    "badge": "",
+    "viewCount": 3,
+    "views": [
+      "/uploads/039b2d70-0e1e-46fa-8011-961aa6089387/view-0.jpg",
+      "/uploads/039b2d70-0e1e-46fa-8011-961aa6089387/view-1.jpg",
+      "/uploads/039b2d70-0e1e-46fa-8011-961aa6089387/view-2.jpg"
+    ],
+    "viewLabels": [
+      "Sol görünüm",
+      "Orta görünüm",
+      "Sağ görünüm"
+    ],
+    "thumbnail": "/uploads/039b2d70-0e1e-46fa-8011-961aa6089387/view-1.jpg",
+    "basePrice": 949,
+    "sizes": [
+      "A3",
+      "A2",
+      "A1"
+    ],
+    "sizePrices": {
+      "A3": 949,
+      "A2": 949,
+      "A1": 949
+    },
+    "featured": true,
+    "published": true,
+    "createdAt": "2026-06-15T03:46:11.726Z",
+    "updatedAt": "2026-06-15T03:46:32.144Z"
+  },
+  {
+    "id": "1883b4ea-a5f5-451c-9791-2b694c0094da",
+    "slug": "harry-potter-lenticular",
+    "name": "Harry Potter Lenticular",
+    "description": "Harry Potter Lenticular",
+    "category": "3D Lentiküler",
+    "badge": "",
+    "viewCount": 3,
+    "views": [
+      "/uploads/1883b4ea-a5f5-451c-9791-2b694c0094da/view-0.jpg",
+      "/uploads/1883b4ea-a5f5-451c-9791-2b694c0094da/view-1.jpg",
+      "/uploads/1883b4ea-a5f5-451c-9791-2b694c0094da/view-2.jpg"
+    ],
+    "viewLabels": [
+      "Sol görünüm",
+      "Orta görünüm",
+      "Sağ görünüm"
+    ],
+    "thumbnail": "/uploads/1883b4ea-a5f5-451c-9791-2b694c0094da/view-1.jpg",
+    "basePrice": 949,
+    "sizes": [
+      "A3",
+      "A2",
+      "A1"
+    ],
+    "sizePrices": {
+      "A3": 949,
+      "A2": 949,
+      "A1": 949
+    },
+    "featured": true,
+    "published": true,
+    "createdAt": "2026-06-15T14:25:16.398Z",
+    "updatedAt": "2026-06-15T14:26:16.168Z"
+  },
+  {
+    "id": "a6a7e474-91ff-4ee1-889c-e1147c2387b6",
+    "slug": "one-piece-lenticuler-poster",
+    "name": "One Piece Lenticuler Poster",
+    "description": "One Piece Lenticuler Poster",
+    "category": "3D Lentiküler",
+    "badge": "",
+    "viewCount": 3,
+    "views": [
+      "/uploads/a6a7e474-91ff-4ee1-889c-e1147c2387b6/view-0.jpg",
+      "/uploads/a6a7e474-91ff-4ee1-889c-e1147c2387b6/view-1.jpg",
+      "/uploads/a6a7e474-91ff-4ee1-889c-e1147c2387b6/view-2.jpg"
+    ],
+    "viewLabels": [
+      "Sol görünüm",
+      "Orta görünüm",
+      "Sağ görünüm"
+    ],
+    "thumbnail": "/uploads/a6a7e474-91ff-4ee1-889c-e1147c2387b6/view-1.jpg",
+    "basePrice": 949,
+    "sizes": [
+      "A3",
+      "A2",
+      "A1"
+    ],
+    "sizePrices": {
+      "A3": 949,
+      "A2": 949,
+      "A1": 949
+    },
+    "featured": true,
+    "published": true,
+    "createdAt": "2026-06-15T14:30:58.948Z",
+    "updatedAt": "2026-06-15T14:31:11.192Z"
+  },
+  {
+    "id": "76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54",
+    "slug": "muhammed-ali-lenticular-poster",
+    "name": "Muhammed Ali Lenticular Poster",
+    "description": "Muhammed Ali Lenticular Poster",
+    "category": "3D Lentiküler",
+    "badge": "",
+    "viewCount": 3,
+    "views": [
+      "/uploads/76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54/view-0.jpg",
+      "/uploads/76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54/view-1.jpg",
+      "/uploads/76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54/view-2.jpg"
+    ],
+    "viewLabels": [
+      "Sol görünüm",
+      "Orta görünüm",
+      "Sağ görünüm"
+    ],
+    "thumbnail": "/uploads/76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54/view-1.jpg",
+    "basePrice": 949,
+    "sizes": [
+      "A3",
+      "A2",
+      "A1"
+    ],
+    "sizePrices": {
+      "A3": 949,
+      "A2": 949,
+      "A1": 949
+    },
+    "featured": false,
+    "published": true,
+    "createdAt": "2026-06-15T14:35:13.995Z",
+    "updatedAt": "2026-06-15T14:35:16.258Z"
+  }
+]

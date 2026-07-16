@@ -1,0 +1,52 @@
+[
+  {
+    "id": "rev-luffy-001",
+    "productId": "5ac1fd24-f2bb-4977-9725-63595a28122b",
+    "authorName": "Ece K.",
+    "rating": 5,
+    "title": "",
+    "body": "Luffy posteri açı değiştirince tamamen başka bir kareye dönüyor. Misafirler ilk bakışta fark ediyor.",
+    "createdAt": "2026-05-20T10:15:00.000Z",
+    "published": true
+  },
+  {
+    "id": "rev-aot-001",
+    "productId": "039b2d70-0e1e-46fa-8011-961aa6089387",
+    "authorName": "Mert A.",
+    "rating": 5,
+    "title": "",
+    "body": "Attack on Titan geçişleri çok net. Normal postere göre çok daha etkileyici duruyor.",
+    "createdAt": "2026-05-22T14:30:00.000Z",
+    "published": true
+  },
+  {
+    "id": "rev-hp-001",
+    "productId": "1883b4ea-a5f5-451c-9791-2b694c0094da",
+    "authorName": "Selin D.",
+    "rating": 5,
+    "title": "",
+    "body": "Harry Potter posteri odaya asınca hareket hissi veriyor. Baskı kalitesi de beklentimin üstündeydi.",
+    "createdAt": "2026-05-25T09:00:00.000Z",
+    "published": true
+  },
+  {
+    "id": "rev-op-001",
+    "productId": "a6a7e474-91ff-4ee1-889c-e1147c2387b6",
+    "authorName": "Can Y.",
+    "rating": 5,
+    "title": "",
+    "body": "One Piece üçlü geçişi harika. Set indirimiyle birlikte aldım, ikisi de çok iyi paketlenmiş geldi.",
+    "createdAt": "2026-05-28T16:45:00.000Z",
+    "published": true
+  },
+  {
+    "id": "rev-ali-001",
+    "productId": "76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54",
+    "authorName": "Studio Nova",
+    "rating": 5,
+    "title": "",
+    "body": "Muhammed Ali posteri ofis duvarında minimal alana çok yakıştı. Lentiküler efekt gerçekten fark yaratıyor.",
+    "createdAt": "2026-06-01T11:20:00.000Z",
+    "published": true
+  }
+]

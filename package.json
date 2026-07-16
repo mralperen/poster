@@ -6,16 +6,25 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate:demo": "node scripts/generate-demo-frames.mjs",
+    "generate:products": "node scripts/generate-products.mjs",
+    "sync:blob": "node scripts/sync-blob.mjs",
+    "process:logo": "node scripts/process-logo.mjs"
   },
   "dependencies": {
+    "@vercel/blob": "^2.5.0",
     "next": "16.2.7",
+    "otplib": "^13.4.1",
+    "qrcode": "^1.5.4",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
