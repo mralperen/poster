@@ -66,15 +66,11 @@ export function AddToCartForm({
             [
               {
                 value: "framed" as const,
-                hint: "Standart",
-                price: getUnitPrice(product.basePrice, "framed"),
-                discountLabel: null as string | null,
+                hint: "Standart gönderim",
               },
               {
                 value: "frameless" as const,
-                hint: null,
-                price: getUnitPrice(product.basePrice, "frameless"),
-                discountLabel: `−${FRAMELESS_DISCOUNT} ₺`,
+                hint: `${FRAMELESS_DISCOUNT} ₺ daha uygun`,
               },
             ] as const
           ).map((option) => {
@@ -93,17 +89,14 @@ export function AddToCartForm({
                 <span className="block text-sm font-semibold text-white">
                   {FRAME_OPTION_LABELS[option.value]}
                 </span>
-                <span className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
-                  {option.discountLabel ? (
-                    <span className="rounded bg-amber-300/15 px-1.5 py-0.5 font-semibold text-amber-300">
-                      {option.discountLabel}
-                    </span>
-                  ) : (
-                    <span className="text-zinc-500">{option.hint}</span>
-                  )}
-                  <span className="font-medium text-zinc-300">
-                    {formatPrice(option.price)}
-                  </span>
+                <span
+                  className={`mt-1 block text-[11px] ${
+                    option.value === "frameless"
+                      ? "font-medium text-amber-300"
+                      : "text-zinc-500"
+                  }`}
+                >
+                  {option.hint}
                 </span>
               </button>
             );
@@ -146,16 +139,21 @@ export function AddToCartForm({
 
         <div className="shrink-0 text-right">
           <p className="text-xs font-medium tracking-wide text-zinc-500 uppercase">
-            Toplam
+            Fiyat
           </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums text-white">
+          <p className="mt-2 text-2xl font-semibold tabular-nums text-amber-300">
             {formatPrice(total)}
           </p>
-          {quantity > 1 && (
-            <p className="mt-1 text-[11px] text-zinc-600">
-              {formatPrice(unitPrice)} / adet
+          {frameOption === "frameless" ? (
+            <p className="mt-1 text-[11px] text-zinc-500">
+              <span className="line-through">
+                {formatPrice(product.basePrice * quantity)}
+              </span>
+              <span className="ml-1.5 text-amber-300/80">
+                −{formatPrice(FRAMELESS_DISCOUNT * quantity)}
+              </span>
             </p>
-          )}
+          ) : null}
         </div>
       </div>
 

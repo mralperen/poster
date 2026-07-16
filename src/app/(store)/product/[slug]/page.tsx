@@ -9,10 +9,9 @@ import { ProductReviews } from "@/components/ProductReviews";
 import { ProductMobileBar } from "@/components/ProductMobileBar";
 import { ProductVideoButton } from "@/components/ProductVideoButton";
 import { brand } from "@/lib/brand";
-import { formatPrice } from "@/lib/format";
 import { withProductImageVersion } from "@/lib/image-version";
 import { getProductBySlug, getPublishedProducts } from "@/lib/products";
-import { FRAMELESS_DISCOUNT, STANDARD_POSTER_SIZE_LABEL } from "@/lib/pricing";
+import { STANDARD_POSTER_SIZE_LABEL } from "@/lib/pricing";
 import { absoluteUrl, buildMetadata, productKeywords } from "@/lib/seo";
 import { getSiteContent } from "@/lib/site-content";
 
@@ -121,15 +120,7 @@ export default async function ProductPage({ params }: PageProps) {
                 <ProductVideoButton src={displayProduct.video} title={product.name} />
               </div>
 
-              <p className="mt-3 text-2xl font-bold tabular-nums text-amber-300">
-                {formatPrice(product.basePrice)}
-              </p>
-              <p className="mt-1 text-xs text-zinc-500">
-                Çerçeveli standart · Çerçevesiz{" "}
-                {formatPrice(Math.max(0, product.basePrice - FRAMELESS_DISCOUNT))}
-              </p>
-
-              <p className="mt-3 text-xs text-zinc-600">
+              <p className="mt-3 text-xs text-zinc-500">
                 {STANDARD_POSTER_SIZE_LABEL} · Korumalı kargo
               </p>
 
