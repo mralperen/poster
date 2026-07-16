@@ -65,7 +65,9 @@ export function ProductVideoButton({ src, title }: ProductVideoButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-white/30 hover:text-white"
+        aria-label="Video"
+        title="Video"
+        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-zinc-300 transition-colors hover:border-white/30 hover:text-white"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path
@@ -76,7 +78,6 @@ export function ProductVideoButton({ src, title }: ProductVideoButtonProps) {
             strokeLinejoin="round"
           />
         </svg>
-        Video
       </button>
       {modal}
     </>
