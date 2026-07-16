@@ -71,8 +71,9 @@ export async function PUT(request: Request, context: RouteContext) {
 
     revalidatePath("/");
     revalidatePath("/shop");
-    revalidatePath(`/product/${product.slug}`);
     revalidatePath("/admin");
+    revalidatePath("/admin/products");
+    revalidatePath(`/product/${product.slug}`);
     return NextResponse.json(product);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Güncelleme başarısız.";
@@ -92,6 +93,8 @@ export async function DELETE(_request: Request, context: RouteContext) {
     await deleteProduct(id);
     revalidatePath("/");
     revalidatePath("/shop");
+    revalidatePath("/admin");
+    revalidatePath("/admin/products");
     if (product) revalidatePath(`/product/${product.slug}`);
     return NextResponse.json({ ok: true });
   } catch (error) {

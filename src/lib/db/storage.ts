@@ -161,9 +161,14 @@ export async function deletePath(relativePath: string): Promise<void> {
   const normalized = relativePath.replace(/^\//, "");
 
   if (useBlobStorage()) {
-    const { del, list } = await import("@vercel/blob");
-    const { blobs } = await list({ prefix: normalized });
-    await Promise.all(blobs.map((blob) => del(blob.url)));
+    try {
+      const { del, list } = await import("@vercel/blob");
+      const { blobs } = await list({ prefix: normalized });
+      if (blobs.length === 0) return;
+      await Promise.all(blobs.map((blob) => del(blob.url)));
+    } catch {
+      /* missing/empty prefix is fine */
+    }
     return;
   }
 

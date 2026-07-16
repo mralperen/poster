@@ -178,7 +178,13 @@ export async function deleteProduct(id: string): Promise<void> {
     throw new Error("Ürün bulunamadı.");
   }
   await writeAll(filtered);
-  await deletePath(uploadDirForProduct(id));
+
+  // Görseller Blob'da yoksa / klasör boşsa silmeyi engellemesin
+  try {
+    await deletePath(uploadDirForProduct(id));
+  } catch {
+    /* ignore missing upload assets */
+  }
 }
 
 export async function saveViewImage(
