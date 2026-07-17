@@ -65,11 +65,23 @@ export function ProductVideoButton({ src, title }: ProductVideoButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Video"
-        title="Video"
-        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] text-zinc-300 transition-colors hover:border-white/30 hover:text-white"
+        aria-label="Video izle"
+        title="Video izle"
+        className="product-video-btn group relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-300 text-black shadow-[0_0_0_1px_rgba(251,191,36,0.35),0_0_20px_rgba(251,191,36,0.35)] transition-transform duration-200 hover:scale-105 hover:bg-amber-200 hover:shadow-[0_0_0_1px_rgba(251,191,36,0.5),0_0_28px_rgba(251,191,36,0.55)] active:scale-95"
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <span
+          className="pointer-events-none absolute inset-0 animate-ping rounded-full bg-amber-300/40"
+          style={{ animationDuration: "2.2s" }}
+          aria-hidden
+        />
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden
+          className="relative z-[1] translate-x-px"
+        >
           <path
             d="M8 6.5v11l9-5.5-9-5.5Z"
             fill="currentColor"
