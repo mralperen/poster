@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   deletePath,
@@ -25,10 +26,31 @@ export type ProductInput = {
   published?: boolean;
 };
 
+async function readBundledProducts(): Promise<Product[]> {
+  try {
+    const raw = await readFile(path.join(process.cwd(), DATA_FILE), "utf-8");
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? (parsed as Product[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 async function readAll(): Promise<Product[]> {
   const raw = await readTextFile(DATA_FILE);
-  if (!raw) return [];
-  return JSON.parse(raw) as Product[];
+  if (!raw) return readBundledProducts();
+
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return readBundledProducts();
+    if (parsed.length === 0) {
+      const bundled = await readBundledProducts();
+      return bundled.length > 0 ? bundled : [];
+    }
+    return parsed as Product[];
+  } catch {
+    return readBundledProducts();
+  }
 }
 
 async function writeAll(products: Product[]): Promise<void> {

@@ -11,9 +11,9 @@ async function blobExists(key: string): Promise<boolean> {
   );
 }
 
-async function uploadFile(relativePath: string, contentType: string) {
+async function uploadFile(relativePath: string, contentType: string, force = false) {
   const key = relativePath.replace(/^\//, "").replace(/\\/g, "/");
-  if (await blobExists(key)) {
+  if (!force && (await blobExists(key))) {
     console.log(`skip  ${key}`);
     return;
   }
@@ -26,7 +26,7 @@ async function uploadFile(relativePath: string, contentType: string) {
     allowOverwrite: true,
     contentType,
   });
-  console.log(`upload ${key}`);
+  console.log(`${force ? "force " : "upload "} ${key}`);
 }
 
 async function walkUploads(dir: string, base = "public/uploads") {
@@ -62,6 +62,8 @@ async function main() {
     process.exit(1);
   }
 
+  const force = process.argv.includes("--force");
+
   const jsonFiles = [
     "data/products.json",
     "data/site-content.json",
@@ -73,14 +75,14 @@ async function main() {
 
   for (const file of jsonFiles) {
     try {
-      await uploadFile(file, "application/json");
+      await uploadFile(file, "application/json", force);
     } catch (error) {
       console.warn(`warn  ${file}: ${error instanceof Error ? error.message : error}`);
     }
   }
 
   await walkUploads(path.join(ROOT, "public", "uploads"));
-  console.log("Blob senkronizasyonu tamam.");
+  console.log(force ? "Blob senkronizasyonu tamam (--force)." : "Blob senkronizasyonu tamam.");
 }
 
 main().catch((error) => {

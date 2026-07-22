@@ -53,11 +53,23 @@ export async function readTextFile(relativePath: string): Promise<string | null>
   const normalized = relativePath.replace(/^\//, "");
 
   if (useBlobStorage()) {
-    return readBlobText(normalized);
+    const fromBlob = await readBlobText(normalized);
+    if (fromBlob !== null) return fromBlob;
+
+    // Blob'da dosya yoksa deploy paketindeki (git) kopyaya düş — ürün kaybını önler
+    try {
+      return await readFile(resolveLocalPath(normalized), "utf-8");
+    } catch {
+      return null;
+    }
   }
 
   if (process.env.VERCEL) {
-    return null;
+    try {
+      return await readFile(resolveLocalPath(normalized), "utf-8");
+    } catch {
+      return null;
+    }
   }
 
   try {
@@ -98,11 +110,21 @@ export async function readBinaryFile(relativePath: string): Promise<Buffer | nul
   const normalized = relativePath.replace(/^\//, "");
 
   if (useBlobStorage()) {
-    return readBlobBytes(normalized);
+    const fromBlob = await readBlobBytes(normalized);
+    if (fromBlob) return fromBlob;
+    try {
+      return await readFile(resolveLocalPath(normalized));
+    } catch {
+      return null;
+    }
   }
 
   if (process.env.VERCEL) {
-    return null;
+    try {
+      return await readFile(resolveLocalPath(normalized));
+    } catch {
+      return null;
+    }
   }
 
   try {

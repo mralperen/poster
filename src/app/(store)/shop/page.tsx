@@ -3,6 +3,8 @@ import { buildMetadata } from "@/lib/seo";
 import { getPublishedProducts } from "@/lib/products";
 import { getSiteContent } from "@/lib/site-content";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = buildMetadata({
   title: "Lentiküler Poster Mağazası | 3D Koleksiyon — The Posterist",
   description:
