@@ -1,6 +1,25 @@
 import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+type CacheEntry = { value: string; expires: number };
+
+const g = globalThis as typeof globalThis & {
+  __posterTextCache?: Map<string, CacheEntry>;
+  __posterMediaUrls?: Map<string, string>;
+};
+
+function textCache(): Map<string, CacheEntry> {
+  if (!g.__posterTextCache) g.__posterTextCache = new Map();
+  return g.__posterTextCache;
+}
+
+function mediaUrlCache(): Map<string, string> {
+  if (!g.__posterMediaUrls) g.__posterMediaUrls = new Map();
+  return g.__posterMediaUrls;
+}
+
+const TEXT_CACHE_TTL_MS = 60_000;
+
 function useBlobStorage(): boolean {
   if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) return true;
   if (process.env.VERCEL && process.env.BLOB_STORE_ID?.trim()) return true;
@@ -15,12 +34,17 @@ function requireBlobOnVercel(): void {
   }
 }
 
-function blobPutOptions(contentType: string) {
+function isUploadPath(relativePath: string): boolean {
+  return relativePath.replace(/^\//, "").startsWith("uploads/");
+}
+
+function blobPutOptions(contentType: string, access: "public" | "private") {
   return {
-    access: "private" as const,
+    access,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType,
+    cacheControlMaxAge: 60 * 60 * 24 * 30,
   };
 }
 
@@ -30,6 +54,22 @@ function resolveLocalPath(relativePath: string): string {
 
 async function streamToBuffer(stream: ReadableStream<Uint8Array>): Promise<Buffer> {
   return Buffer.from(await new Response(stream).arrayBuffer());
+}
+
+async function readLocalText(relativePath: string): Promise<string | null> {
+  try {
+    return await readFile(resolveLocalPath(relativePath), "utf-8");
+  } catch {
+    return null;
+  }
+}
+
+async function readLocalBinary(relativePath: string): Promise<Buffer | null> {
+  try {
+    return await readFile(resolveLocalPath(relativePath));
+  } catch {
+    return null;
+  }
 }
 
 async function readBlobBytes(relativePath: string): Promise<Buffer | null> {
@@ -49,34 +89,62 @@ async function readBlobText(relativePath: string): Promise<string | null> {
   return bytes ? bytes.toString("utf-8") : null;
 }
 
+function invalidateTextCache(relativePath?: string): void {
+  const cache = textCache();
+  if (!relativePath) {
+    cache.clear();
+    return;
+  }
+  cache.delete(relativePath.replace(/^\//, ""));
+}
+
+export function getCachedMediaUrl(relativePath: string): string | undefined {
+  return mediaUrlCache().get(relativePath.replace(/^\//, ""));
+}
+
+export function rememberMediaUrl(relativePath: string, url: string): void {
+  mediaUrlCache().set(relativePath.replace(/^\//, ""), url);
+}
+
+/**
+ * JSON / metin oku.
+ * Sıra: bellek cache → lokal git kopyası → Blob (sadece cache miss).
+ * Böylece her sayfa açılışında Blob Simple Operation yakılmaz.
+ */
 export async function readTextFile(relativePath: string): Promise<string | null> {
   const normalized = relativePath.replace(/^\//, "");
+  const cache = textCache();
+  const cached = cache.get(normalized);
+  if (cached && cached.expires > Date.now()) {
+    return cached.value;
+  }
+
+  const local = await readLocalText(normalized);
 
   if (useBlobStorage()) {
-    const fromBlob = await readBlobText(normalized);
-    if (fromBlob !== null) return fromBlob;
-
-    // Blob'da dosya yoksa deploy paketindeki (git) kopyaya düş — ürün kaybını önler
     try {
-      return await readFile(resolveLocalPath(normalized), "utf-8");
+      const fromBlob = await readBlobText(normalized);
+      if (fromBlob !== null) {
+        cache.set(normalized, {
+          value: fromBlob,
+          expires: Date.now() + TEXT_CACHE_TTL_MS,
+        });
+        return fromBlob;
+      }
     } catch {
-      return null;
+      /* kota / ağ hatası → lokal yedek */
     }
   }
 
-  if (process.env.VERCEL) {
-    try {
-      return await readFile(resolveLocalPath(normalized), "utf-8");
-    } catch {
-      return null;
-    }
+  if (local !== null) {
+    cache.set(normalized, {
+      value: local,
+      expires: Date.now() + TEXT_CACHE_TTL_MS,
+    });
+    return local;
   }
 
-  try {
-    return await readFile(resolveLocalPath(normalized), "utf-8");
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 export async function writeTextFile(
@@ -87,6 +155,11 @@ export async function writeTextFile(
 
   requireBlobOnVercel();
 
+  textCache().set(normalized, {
+    value: content,
+    expires: Date.now() + TEXT_CACHE_TTL_MS,
+  });
+
   if (useBlobStorage()) {
     const { put } = await import("@vercel/blob");
     await put(
@@ -96,6 +169,7 @@ export async function writeTextFile(
         normalized.endsWith(".json")
           ? "application/json"
           : "text/plain;charset=utf-8",
+        "private",
       ),
     );
     return;
@@ -109,43 +183,56 @@ export async function writeTextFile(
 export async function readBinaryFile(relativePath: string): Promise<Buffer | null> {
   const normalized = relativePath.replace(/^\//, "");
 
+  const local = await readLocalBinary(normalized);
+  if (local) return local;
+
   if (useBlobStorage()) {
-    const fromBlob = await readBlobBytes(normalized);
-    if (fromBlob) return fromBlob;
-    try {
-      return await readFile(resolveLocalPath(normalized));
-    } catch {
-      return null;
-    }
+    return readBlobBytes(normalized);
   }
 
-  if (process.env.VERCEL) {
-    try {
-      return await readFile(resolveLocalPath(normalized));
-    } catch {
-      return null;
-    }
-  }
-
-  try {
-    return await readFile(resolveLocalPath(normalized));
-  } catch {
-    return null;
-  }
+  return null;
 }
 
+/**
+ * Medya (uploads/) public yazılır → CDN'den servis, her görüntü private get() yakmaz.
+ * JSON vb. private kalır.
+ */
 export async function writeBinaryFile(
   relativePath: string,
   buffer: Buffer,
   contentType: string,
-): Promise<void> {
+): Promise<string | void> {
   const normalized = relativePath.replace(/^\//, "");
 
   requireBlobOnVercel();
 
   if (useBlobStorage()) {
     const { put } = await import("@vercel/blob");
-    await put(normalized, buffer, blobPutOptions(contentType));
+    const access = isUploadPath(normalized) ? "public" : "private";
+
+    try {
+      const result = await put(
+        normalized,
+        buffer,
+        blobPutOptions(contentType, access),
+      );
+      if (result.url) {
+        rememberMediaUrl(normalized, result.url);
+        return result.url;
+      }
+    } catch {
+      // Store private-only ise public put fail olabilir → private fallback
+      if (access === "public") {
+        const result = await put(
+          normalized,
+          buffer,
+          blobPutOptions(contentType, "private"),
+        );
+        if (result.url) rememberMediaUrl(normalized, result.url);
+        return result.url;
+      }
+      throw new Error("Blob yazılamadı.");
+    }
     return;
   }
 
@@ -157,26 +244,17 @@ export async function writeBinaryFile(
 export async function fileExists(relativePath: string): Promise<boolean> {
   const normalized = relativePath.replace(/^\//, "");
 
-  if (useBlobStorage()) {
-    try {
-      const { head } = await import("@vercel/blob");
-      await head(normalized);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  if (process.env.VERCEL) {
-    return false;
-  }
+  if (getCachedMediaUrl(normalized)) return true;
 
   try {
     await access(resolveLocalPath(normalized));
     return true;
   } catch {
-    return false;
+    /* continue */
   }
+
+  // head() Simple Operation yakar — kotayı korumak için Blob head kullanma
+  return false;
 }
 
 export async function deletePath(relativePath: string): Promise<void> {
@@ -188,6 +266,9 @@ export async function deletePath(relativePath: string): Promise<void> {
       const { blobs } = await list({ prefix: normalized });
       if (blobs.length === 0) return;
       await Promise.all(blobs.map((blob) => del(blob.url)));
+      for (const blob of blobs) {
+        mediaUrlCache().delete(blob.pathname.replace(/^\//, ""));
+      }
     } catch {
       /* missing/empty prefix is fine */
     }
@@ -200,3 +281,5 @@ export async function deletePath(relativePath: string): Promise<void> {
 export function isRemoteStorage(): boolean {
   return useBlobStorage();
 }
+
+export { invalidateTextCache };

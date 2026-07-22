@@ -13,10 +13,17 @@ const LOGIN_LIMIT = 8;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function GET() {
-  return NextResponse.json({
-    totpRequired: await isTotpRequired(),
-    adminConfigured: isAdminConfigured(),
-  });
+  try {
+    return NextResponse.json({
+      totpRequired: await isTotpRequired(),
+      adminConfigured: isAdminConfigured(),
+    });
+  } catch {
+    return NextResponse.json({
+      totpRequired: false,
+      adminConfigured: isAdminConfigured(),
+    });
+  }
 }
 
 export async function POST(request: Request) {
@@ -27,53 +34,63 @@ export async function POST(request: Request) {
     );
   }
 
-  const userIp = resolveClientIp(request);
-  const rate = await consumeRateLimit(
-    `admin-login:${userIp}`,
-    LOGIN_LIMIT,
-    LOGIN_WINDOW_MS,
-  );
+  try {
+    const userIp = resolveClientIp(request);
+    const rate = await consumeRateLimit(
+      `admin-login:${userIp}`,
+      LOGIN_LIMIT,
+      LOGIN_WINDOW_MS,
+    );
 
-  if (!rate.allowed) {
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: `Çok fazla deneme. ${rate.retryAfterSec ?? 60} saniye sonra tekrar deneyin.`,
+        },
+        { status: 429 },
+      );
+    }
+
+    const body = (await request.json()) as {
+      password?: string;
+      totpCode?: string;
+    };
+
+    const result = await verifyAdminLogin(body.password ?? "", body.totpCode);
+
+    if (!result.ok) {
+      return NextResponse.json(
+        { error: result.error, needsTotp: result.needsTotp ?? false },
+        { status: 401 },
+      );
+    }
+
+    const sessionToken = getAdminToken();
+    if (!sessionToken) {
+      return NextResponse.json(
+        { error: "Admin oturumu oluşturulamadı." },
+        { status: 503 },
+      );
+    }
+
+    await clearRateLimit(`admin-login:${userIp}`);
+
+    const response = NextResponse.json({ ok: true });
+    response.cookies.set(ADMIN_COOKIE, sessionToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    return response;
+  } catch {
     return NextResponse.json(
       {
-        error: `Çok fazla deneme. ${rate.retryAfterSec ?? 60} saniye sonra tekrar deneyin.`,
+        error:
+          "Giriş şu an yapılamıyor. Vercel Blob kotası dolu olabilir — biraz sonra tekrar deneyin.",
       },
-      { status: 429 },
-    );
-  }
-
-  const body = (await request.json()) as {
-    password?: string;
-    totpCode?: string;
-  };
-
-  const result = await verifyAdminLogin(body.password ?? "", body.totpCode);
-
-  if (!result.ok) {
-    return NextResponse.json(
-      { error: result.error, needsTotp: result.needsTotp ?? false },
-      { status: 401 },
-    );
-  }
-
-  const sessionToken = getAdminToken();
-  if (!sessionToken) {
-    return NextResponse.json(
-      { error: "Admin oturumu oluşturulamadı." },
       { status: 503 },
     );
   }
-
-  await clearRateLimit(`admin-login:${userIp}`);
-
-  const response = NextResponse.json({ ok: true });
-  response.cookies.set(ADMIN_COOKIE, sessionToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
-  return response;
 }

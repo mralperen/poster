@@ -1,6 +1,9 @@
 import path from "node:path";
-import { readBinaryFile } from "@/lib/db/storage";
 import { NextResponse } from "next/server";
+import {
+  getCachedMediaUrl,
+  readBinaryFile,
+} from "@/lib/db/storage";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
@@ -13,7 +16,8 @@ const CONTENT_TYPES: Record<string, string> = {
   ".webm": "video/webm",
 };
 
-export const dynamic = "force-dynamic";
+// CDN'nin yanıtı cache'lemesine izin ver — her istekte Function+Blob yakılmaz
+export const revalidate = 86400;
 
 export async function GET(_request: Request, context: RouteContext) {
   const { path: segments } = await context.params;
@@ -21,6 +25,11 @@ export async function GET(_request: Request, context: RouteContext) {
 
   if (relativePath.includes("..")) {
     return NextResponse.json({ error: "Geçersiz dosya yolu." }, { status: 400 });
+  }
+
+  const publicUrl = getCachedMediaUrl(relativePath);
+  if (publicUrl) {
+    return NextResponse.redirect(publicUrl, 308);
   }
 
   const buffer = await readBinaryFile(relativePath);
@@ -33,7 +42,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
   return new Response(new Uint8Array(buffer), {
     headers: {
-      "Cache-Control": "public, max-age=31536000, immutable",
+      "Cache-Control": "public, s-maxage=31536000, max-age=31536000, immutable",
       "Content-Length": String(buffer.byteLength),
       "Content-Type": contentType,
     },

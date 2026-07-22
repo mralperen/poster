@@ -4,7 +4,9 @@ import path from "node:path";
 import {
   deletePath,
   fileExists,
+  invalidateTextCache,
   readTextFile,
+  rememberMediaUrl,
   writeBinaryFile,
   writeTextFile,
 } from "@/lib/db/storage";
@@ -54,6 +56,7 @@ async function readAll(): Promise<Product[]> {
 }
 
 async function writeAll(products: Product[]): Promise<void> {
+  invalidateTextCache(DATA_FILE);
   await writeTextFile(DATA_FILE, JSON.stringify(products, null, 2));
 }
 
@@ -62,9 +65,11 @@ function uploadRelativePath(id: string, slotIndex: number): string {
 }
 
 async function viewFileExists(viewPath: string): Promise<boolean> {
-  const relative = viewPath.replace(/^\//, "");
-  if (relative.startsWith("uploads/")) {
-    return fileExists(relative);
+  const relative = viewPath.replace(/^\//, "").split("?")[0];
+  // Blob head() kotayı bitiriyordu — yol tanımlıysa var kabul et
+  if (!relative) return false;
+  if (relative.startsWith("uploads/") || relative.startsWith("http")) {
+    return true;
   }
   return fileExists(path.join("public", relative).replace(/\\/g, "/"));
 }
@@ -232,7 +237,10 @@ export async function saveViewImage(
   }
 
   const relativePath = uploadRelativePath(id, slotIndex);
-  await writeBinaryFile(relativePath, buffer, "image/jpeg");
+  const publicUrl = await writeBinaryFile(relativePath, buffer, "image/jpeg");
+  if (typeof publicUrl === "string" && publicUrl) {
+    rememberMediaUrl(relativePath, publicUrl);
+  }
 
   const publicPath = `/uploads/${id}/view-${slotIndex}.jpg`;
   const products = await readAll();
@@ -271,7 +279,10 @@ export async function saveProductVideo(
 
   const relativePath = `uploads/${id}/video.${extension}`;
   const contentType = extension === "webm" ? "video/webm" : "video/mp4";
-  await writeBinaryFile(relativePath, buffer, contentType);
+  const publicUrl = await writeBinaryFile(relativePath, buffer, contentType);
+  if (typeof publicUrl === "string" && publicUrl) {
+    rememberMediaUrl(relativePath, publicUrl);
+  }
 
   const publicPath = `/uploads/${id}/video.${extension}`;
   return registerProductVideoPath(id, publicPath);

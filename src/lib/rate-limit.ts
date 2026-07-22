@@ -1,5 +1,3 @@
-import { readTextFile, writeTextFile } from "@/lib/db/storage";
-
 type RateLimitEntry = {
   count: number;
   windowStart: number;
@@ -7,45 +5,30 @@ type RateLimitEntry = {
 
 type RateLimitStore = Record<string, RateLimitEntry>;
 
-const DATA_FILE = "data/rate-limits.json";
+const g = globalThis as typeof globalThis & {
+  __posterRateLimits?: RateLimitStore;
+};
 
-async function readStore(): Promise<RateLimitStore> {
-  const raw = await readTextFile(DATA_FILE);
-  if (!raw) return {};
-
-  try {
-    const parsed = JSON.parse(raw) as RateLimitStore;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
+function store(): RateLimitStore {
+  if (!g.__posterRateLimits) g.__posterRateLimits = {};
+  return g.__posterRateLimits;
 }
 
-async function writeStore(store: RateLimitStore, windowMs: number): Promise<void> {
-  const now = Date.now();
-  const pruned: RateLimitStore = {};
-
-  for (const [key, entry] of Object.entries(store)) {
-    if (now - entry.windowStart < windowMs * 2) {
-      pruned[key] = entry;
-    }
-  }
-
-  await writeTextFile(DATA_FILE, `${JSON.stringify(pruned)}\n`);
-}
-
+/**
+ * Bellek içi rate limit — Blob okuma/yazma yok.
+ * (Eski sürüm her login denemesinde Blob Simple/Advanced op yakıyordu.)
+ */
 export async function consumeRateLimit(
   key: string,
   maxAttempts: number,
   windowMs: number,
 ): Promise<{ allowed: boolean; retryAfterSec?: number }> {
-  const store = await readStore();
+  const data = store();
   const now = Date.now();
-  const entry = store[key];
+  const entry = data[key];
 
   if (!entry || now - entry.windowStart >= windowMs) {
-    store[key] = { count: 1, windowStart: now };
-    await writeStore(store, windowMs);
+    data[key] = { count: 1, windowStart: now };
     return { allowed: true };
   }
 
@@ -55,13 +38,10 @@ export async function consumeRateLimit(
   }
 
   entry.count += 1;
-  store[key] = entry;
-  await writeStore(store, windowMs);
+  data[key] = entry;
   return { allowed: true };
 }
 
 export async function clearRateLimit(key: string): Promise<void> {
-  const store = await readStore();
-  delete store[key];
-  await writeStore(store, 15 * 60 * 1000);
+  delete store()[key];
 }

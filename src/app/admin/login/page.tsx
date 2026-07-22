@@ -29,31 +29,38 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "same-origin",
-      body: JSON.stringify({
-        password,
-        totpCode: totpCode || undefined,
-      }),
-    });
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          password,
+          totpCode: totpCode || undefined,
+        }),
+      });
 
-    const data = (await res.json()) as {
-      error?: string;
-      needsTotp?: boolean;
-    };
+      let data: { error?: string; needsTotp?: boolean } = {};
+      try {
+        data = (await res.json()) as { error?: string; needsTotp?: boolean };
+      } catch {
+        data = { error: "Sunucu yanıt vermedi. Blob kotası dolu olabilir." };
+      }
 
-    if (!res.ok) {
-      if (data.needsTotp) setTotpRequired(true);
-      setError(data.error ?? "Giriş başarısız.");
+      if (!res.ok) {
+        if (data.needsTotp) setTotpRequired(true);
+        setError(data.error ?? "Giriş başarısız.");
+        return;
+      }
+
+      const from = searchParams.get("from") ?? "/admin";
+      router.push(from);
+      router.refresh();
+    } catch {
+      setError("Bağlantı hatası. Biraz sonra tekrar deneyin.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const from = searchParams.get("from") ?? "/admin";
-    router.push(from);
-    router.refresh();
   };
 
   return (

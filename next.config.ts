@@ -6,12 +6,23 @@ const nextConfig: NextConfig = {
     "/*": ["./data/**/*"],
   },
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 30,
     localPatterns: [
       {
         pathname: "/uploads/**",
       },
       {
         pathname: "/brand/**",
+      },
+    ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.public.blob.vercel-storage.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.blob.vercel-storage.com",
       },
     ],
   },

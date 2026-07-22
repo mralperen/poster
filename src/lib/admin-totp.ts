@@ -35,7 +35,14 @@ async function readStoredTotpConfig(): Promise<AdminTotpConfig | null> {
 }
 
 export async function getActiveTotpSecret(): Promise<string | null> {
-  return getEnvTotpSecret() ?? (await readStoredTotpConfig())?.secret ?? null;
+  const fromEnv = getEnvTotpSecret();
+  if (fromEnv) return fromEnv;
+
+  try {
+    return (await readStoredTotpConfig())?.secret ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function isTotpRequired(): Promise<boolean> {
