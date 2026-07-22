@@ -62,6 +62,9 @@ export async function POST(request: Request) {
 
     revalidatePath("/");
     revalidatePath("/shop");
+    revalidatePath("/admin");
+    revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${product.id}/edit`);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Kayıt başarısız.";

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { getProductById } from "@/lib/db/products-store";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditProductPage({ params }: PageProps) {
@@ -13,7 +15,7 @@ export default async function EditProductPage({ params }: PageProps) {
   return (
     <div>
       <Link
-        href="/admin"
+        href="/admin/products"
         className="text-sm text-zinc-500 hover:text-zinc-300"
       >
         ← Ürünlere dön

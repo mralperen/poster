@@ -38,8 +38,10 @@ async function readBundledProducts(): Promise<Product[]> {
   }
 }
 
-async function readAll(): Promise<Product[]> {
-  const raw = await readTextFile(DATA_FILE);
+async function readAll(options?: { forceRefresh?: boolean }): Promise<Product[]> {
+  const raw = await readTextFile(DATA_FILE, {
+    forceRefresh: options?.forceRefresh,
+  });
   if (!raw) return readBundledProducts();
 
   try {
@@ -94,14 +96,25 @@ export async function getPublishedProducts(): Promise<Product[]> {
   return products.filter((product) => product.published !== false);
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const products = await readAll();
-  return products.find((p) => p.slug === slug);
-}
-
 export async function getProductById(id: string): Promise<Product | undefined> {
   const products = await readAll();
-  return products.find((p) => p.id === id);
+  const hit = products.find((p) => p.id === id);
+  if (hit) return hit;
+
+  // Başka instance'da oluşturulduysa bellek/lokal eski kalabilir — Blob'dan yenile
+  invalidateTextCache(DATA_FILE);
+  const fresh = await readAll({ forceRefresh: true });
+  return fresh.find((p) => p.id === id);
+}
+
+export async function getProductBySlug(slug: string): Promise<Product | undefined> {
+  const products = await readAll();
+  const hit = products.find((p) => p.slug === slug);
+  if (hit) return hit;
+
+  invalidateTextCache(DATA_FILE);
+  const fresh = await readAll({ forceRefresh: true });
+  return fresh.find((p) => p.slug === slug);
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
