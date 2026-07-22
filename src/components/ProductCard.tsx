@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useInView } from "@/hooks/useInView";
 import { formatPrice } from "@/lib/format";
-import { withImageVersion } from "@/lib/image-version";
+import { isUploadImageSrc, withImageVersion } from "@/lib/image-version";
 import type { Product } from "@/lib/types";
 
 type ProductCardProps = {
@@ -52,6 +52,7 @@ export function ProductCard({ product, animatedPreview = false }: ProductCardPro
                 className="product-lenticular-preview__image object-cover"
                 sizes="(max-width: 768px) 50vw, (max-width: 1280px) 25vw, 280px"
                 quality={74}
+                unoptimized={isUploadImageSrc(src)}
               />
             ))}
           </div>

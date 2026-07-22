@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type TouchEvent as ReactTouchEvent,
 } from "react";
+import { isUploadImageSrc } from "@/lib/image-version";
 import { getViewLabel, getViewWeights } from "@/lib/view-weights";
 
 type PosterScrubberProps = {
@@ -281,6 +282,7 @@ export function PosterScrubber({
               draggable={false}
               className="pointer-events-none absolute inset-0 h-full w-full object-cover"
               sizes="(max-width: 768px) 100vw, 560px"
+              unoptimized={isUploadImageSrc(src)}
               style={{
                 opacity: weights[index],
                 transition: isDragging ? "none" : "opacity 140ms linear",

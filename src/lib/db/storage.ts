@@ -19,6 +19,28 @@ function mediaUrlCache(): Map<string, string> {
 }
 
 const TEXT_CACHE_TTL_MS = 60_000;
+/** Katalog dosyaları: bellek + lokal öncelikli; Blob en fazla 15 dk'da bir. */
+const CATALOG_CACHE_TTL_MS = 15 * 60_000;
+const CATALOG_BLOB_SYNC_MS = 15 * 60_000;
+
+const CATALOG_FILES = new Set([
+  "data/products.json",
+  "data/site-content.json",
+  "data/product-reviews.json",
+]);
+
+const gBlobSync = globalThis as typeof globalThis & {
+  __posterBlobSyncAt?: Map<string, number>;
+};
+
+function blobSyncAt(): Map<string, number> {
+  if (!gBlobSync.__posterBlobSyncAt) gBlobSync.__posterBlobSyncAt = new Map();
+  return gBlobSync.__posterBlobSyncAt;
+}
+
+function isCatalogFile(relativePath: string): boolean {
+  return CATALOG_FILES.has(relativePath.replace(/^\//, ""));
+}
 
 function useBlobStorage(): boolean {
   if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) return true;
@@ -108,8 +130,9 @@ export function rememberMediaUrl(relativePath: string, url: string): void {
 
 /**
  * JSON / metin oku.
- * Sıra: bellek cache → lokal git kopyası → Blob (sadece cache miss).
- * Böylece her sayfa açılışında Blob Simple Operation yakılmaz.
+ *
+ * Katalog (ürün / site / yorum): bellek → lokal git → Blob (en fazla 15 dk'da 1).
+ * Sipariş / admin verisi: bellek → Blob → lokal.
  */
 export async function readTextFile(relativePath: string): Promise<string | null> {
   const normalized = relativePath.replace(/^\//, "");
@@ -119,16 +142,55 @@ export async function readTextFile(relativePath: string): Promise<string | null>
     return cached.value;
   }
 
+  const ttl = isCatalogFile(normalized) ? CATALOG_CACHE_TTL_MS : TEXT_CACHE_TTL_MS;
   const local = await readLocalText(normalized);
+
+  if (isCatalogFile(normalized)) {
+    // Mağaza trafiği lokal dosyadan beslensin — Blob'a her ziyarette gitme
+    const syncMap = blobSyncAt();
+    const lastSync = syncMap.get(normalized) ?? 0;
+    const dueForBlobSync =
+      useBlobStorage() && Date.now() - lastSync >= CATALOG_BLOB_SYNC_MS;
+
+    if (dueForBlobSync) {
+      syncMap.set(normalized, Date.now());
+      try {
+        const fromBlob = await readBlobText(normalized);
+        if (fromBlob !== null) {
+          cache.set(normalized, { value: fromBlob, expires: Date.now() + ttl });
+          return fromBlob;
+        }
+      } catch {
+        /* kota / ağ → lokal */
+      }
+    }
+
+    if (local !== null) {
+      cache.set(normalized, { value: local, expires: Date.now() + ttl });
+      return local;
+    }
+
+    // Lokal yoksa (ilk deploy / boş) bir kez Blob dene
+    if (useBlobStorage()) {
+      try {
+        const fromBlob = await readBlobText(normalized);
+        if (fromBlob !== null) {
+          cache.set(normalized, { value: fromBlob, expires: Date.now() + ttl });
+          return fromBlob;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    return null;
+  }
 
   if (useBlobStorage()) {
     try {
       const fromBlob = await readBlobText(normalized);
       if (fromBlob !== null) {
-        cache.set(normalized, {
-          value: fromBlob,
-          expires: Date.now() + TEXT_CACHE_TTL_MS,
-        });
+        cache.set(normalized, { value: fromBlob, expires: Date.now() + ttl });
         return fromBlob;
       }
     } catch {
@@ -137,10 +199,7 @@ export async function readTextFile(relativePath: string): Promise<string | null>
   }
 
   if (local !== null) {
-    cache.set(normalized, {
-      value: local,
-      expires: Date.now() + TEXT_CACHE_TTL_MS,
-    });
+    cache.set(normalized, { value: local, expires: Date.now() + ttl });
     return local;
   }
 
@@ -155,10 +214,15 @@ export async function writeTextFile(
 
   requireBlobOnVercel();
 
+  const ttl = isCatalogFile(normalized) ? CATALOG_CACHE_TTL_MS : TEXT_CACHE_TTL_MS;
   textCache().set(normalized, {
     value: content,
-    expires: Date.now() + TEXT_CACHE_TTL_MS,
+    expires: Date.now() + ttl,
   });
+  // Admin kaydı sonrası diğer instance'lar da yakında çeksin
+  if (isCatalogFile(normalized)) {
+    blobSyncAt().set(normalized, 0);
+  }
 
   if (useBlobStorage()) {
     const { put } = await import("@vercel/blob");

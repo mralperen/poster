@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { isUploadImageSrc } from "@/lib/image-version";
 import { formatPrice } from "@/lib/format";
 import { getBundleDiscountRate, type PricingConfig } from "@/lib/pricing";
 import type { Product } from "@/lib/types";
@@ -154,6 +155,7 @@ export function BundlePicker({
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                         sizes="(max-width: 640px) 45vw, 120px"
+                        unoptimized={isUploadImageSrc(item.thumbnail)}
                       />
                       <div
                         className={`absolute inset-0 transition-colors ${
@@ -231,6 +233,7 @@ function LockedPosterCard({ product }: { product: Product }) {
           fill
           className="object-cover"
           sizes="(max-width: 640px) 45vw, 120px"
+          unoptimized={isUploadImageSrc(product.thumbnail)}
         />
         <span className="absolute top-2 left-2 rounded-full bg-amber-300 px-2 py-0.5 text-[9px] font-bold text-black uppercase">
           Bu poster

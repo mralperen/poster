@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { PosterScrubber } from "@/components/PosterScrubber";
 import { formatPrice } from "@/lib/format";
-import { withImageVersion } from "@/lib/image-version";
+import { isUploadImageSrc, withImageVersion } from "@/lib/image-version";
 import type { Product } from "@/lib/types";
 
 type LenticularHeroProps = {
@@ -94,6 +94,7 @@ export function LenticularHero({ products }: LenticularHeroProps) {
                       aria-hidden
                       className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       sizes="104px"
+                      unoptimized={isUploadImageSrc(product.thumbnail)}
                     />
                     <span
                       className="absolute inset-x-0 bottom-0 h-1"

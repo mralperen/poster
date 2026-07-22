@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { HomepageReviewCard } from "@/lib/homepage-reviews";
-import { withImageVersion } from "@/lib/image-version";
+import { isUploadImageSrc, withImageVersion } from "@/lib/image-version";
 
 type HomepageReviewsProps = {
   reviews: HomepageReviewCard[];
@@ -30,6 +30,7 @@ function ReviewCard({ review }: { review: HomepageReviewCard }) {
             fill
             sizes="56px"
             className="object-cover"
+            unoptimized={isUploadImageSrc(review.productThumbnail)}
           />
         </div>
       ) : null}
