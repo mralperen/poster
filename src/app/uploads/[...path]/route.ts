@@ -29,6 +29,9 @@ async function streamVideo(
     const rangeHeader = request.headers.get("range");
     const result = await get(relativePath, {
       access: "private",
+      // Video yeni yüklendiğinde/üzerine yazıldığında Blob edge cache eski
+      // 404'ü döndürebiliyor. Medya yanıtımız kendi CDN cache'ini kullanır.
+      useCache: false,
       ...(rangeHeader ? { headers: { Range: rangeHeader } } : {}),
     });
 
