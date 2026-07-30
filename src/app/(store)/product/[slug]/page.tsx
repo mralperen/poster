@@ -115,7 +115,14 @@ export default async function ProductPage({ params }: PageProps) {
                 <h1 className="min-w-0 flex-1 truncate text-2xl font-semibold tracking-tight text-white sm:text-3xl lg:text-4xl">
                   {product.name}
                 </h1>
-                <ProductVideoButton src={displayProduct.video} title={product.name} />
+                <ProductVideoButton
+                  src={
+                    product.video
+                      ? `/api/products/${encodeURIComponent(product.id)}/video`
+                      : undefined
+                  }
+                  title={product.name}
+                />
               </div>
 
               <p className="mt-3 text-xs text-zinc-500">

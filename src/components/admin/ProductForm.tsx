@@ -168,7 +168,9 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     setError("");
     setSuccess("");
 
-    const pathname = `uploads/${product.id}/video.${extension}`;
+    // Aynı Blob yolunu ezmek CDN/tarayıcıda eski videoyu gösterebilir.
+    // Her değişimde yeni yol kullanarak cache'i kesin olarak kır.
+    const pathname = `uploads/${product.id}/video-${Date.now()}.${extension}`;
 
     try {
       let publicPath = "";

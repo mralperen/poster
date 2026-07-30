@@ -5,8 +5,8 @@ export const brand = {
   tagline: "Lentiküler Poster",
   domain: "theposterist.com",
   supportEmail: "destek@theposterist.com",
-  instagram: "@theposterist",
-  instagramUrl: "https://instagram.com/theposterist",
+  instagram: "@theposteristcom",
+  instagramUrl: "https://instagram.com/theposteristcom",
   /** Kendi logonuzu koyunca bu dosyayı güncelleyin veya aynı yola yeni görsel atın */
   logoSrc: "/brand/header-logo.png",
   logoAlt: "The Posterist",

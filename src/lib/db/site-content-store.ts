@@ -272,7 +272,7 @@ const fallbackContent: SiteContent = {
       {
         title: "Instagram",
         value: brand.instagram,
-        href: "https://instagram.com/",
+        href: brand.instagramUrl,
       },
     ],
     note:

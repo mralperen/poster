@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { InfoPage } from "@/components/InfoPage";
+import { brand } from "@/lib/brand";
 import { buildMetadata } from "@/lib/seo";
 import { getSiteContent } from "@/lib/site-content";
+import { resolveInstagramUrl } from "@/lib/social-links";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +49,11 @@ export default async function ContactPage() {
             key={`${card.title}-${card.href}`}
             title={card.title}
             value={card.value}
-            href={card.href}
+            href={
+              card.title.toLocaleLowerCase("tr-TR").includes("instagram")
+                ? resolveInstagramUrl(card.value, card.href, brand.instagramUrl)
+                : card.href
+            }
           />
         ))}
       </div>

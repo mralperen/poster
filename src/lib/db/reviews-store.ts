@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { readTextFile, writeTextFile } from "@/lib/db/storage";
+import {
+  rememberMediaUrl,
+  readTextFile,
+  writeBinaryFile,
+  writeTextFile,
+} from "@/lib/db/storage";
+import { MAX_REVIEW_IMAGES } from "@/lib/review-constants";
 
 export type ProductReview = {
   id: string;
@@ -8,9 +14,13 @@ export type ProductReview = {
   rating: number;
   title: string;
   body: string;
+  /** Müşterinin yüklediği fotoğraflar (/uploads/reviews/...) */
+  images?: string[];
   createdAt: string;
   published: boolean;
 };
+
+export { MAX_REVIEW_IMAGES } from "@/lib/review-constants";
 
 const DATA_FILE = "data/product-reviews.json";
 
@@ -57,13 +67,42 @@ export async function getReviewById(id: string): Promise<ProductReview | undefin
   return reviews.find((review) => review.id === id);
 }
 
+export function isValidReviewImagePath(
+  productId: string,
+  imagePath: string,
+): boolean {
+  const clean = imagePath.split("?")[0] ?? "";
+  const prefix = `/uploads/reviews/${productId}/`;
+  if (!clean.startsWith(prefix)) return false;
+  const filename = clean.slice(prefix.length);
+  return /^[a-zA-Z0-9_-]+\.(?:jpe?g|png|webp)$/i.test(filename);
+}
+
+export async function saveReviewImage(
+  productId: string,
+  buffer: Buffer,
+): Promise<string> {
+  const relativePath = `uploads/reviews/${productId}/${randomUUID()}.jpg`;
+  const publicUrl = await writeBinaryFile(relativePath, buffer, "image/jpeg");
+  if (typeof publicUrl === "string" && publicUrl) {
+    rememberMediaUrl(relativePath, publicUrl);
+  }
+  return `/${relativePath}`;
+}
+
 export async function createProductReview(input: {
   productId: string;
   authorName: string;
   rating: number;
   body: string;
+  images?: string[];
 }): Promise<ProductReview> {
   const reviews = await readAll();
+  const images = (input.images ?? [])
+    .map((src) => src.split("?")[0] ?? "")
+    .filter((src) => isValidReviewImagePath(input.productId, src))
+    .slice(0, MAX_REVIEW_IMAGES);
+
   const review: ProductReview = {
     id: randomUUID(),
     productId: input.productId,
@@ -71,6 +110,7 @@ export async function createProductReview(input: {
     rating: input.rating,
     title: "",
     body: input.body.trim(),
+    ...(images.length > 0 ? { images } : {}),
     createdAt: new Date().toISOString(),
     published: false,
   };

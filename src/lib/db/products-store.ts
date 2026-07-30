@@ -96,8 +96,11 @@ export async function getPublishedProducts(): Promise<Product[]> {
   return products.filter((product) => product.published !== false);
 }
 
-export async function getProductById(id: string): Promise<Product | undefined> {
-  const products = await readAll();
+export async function getProductById(
+  id: string,
+  options?: { forceRefresh?: boolean },
+): Promise<Product | undefined> {
+  const products = await readAll({ forceRefresh: options?.forceRefresh });
   const hit = products.find((p) => p.id === id);
   if (hit) return hit;
 
@@ -290,7 +293,8 @@ export async function saveProductVideo(
   const product = await getProductById(id);
   if (!product) throw new Error("Ürün bulunamadı.");
 
-  const relativePath = `uploads/${id}/video.${extension}`;
+  // Değiştirilen videoyu aynı CDN yoluna yazma; eski içerik cache'te kalabilir.
+  const relativePath = `uploads/${id}/video-${Date.now()}.${extension}`;
   const contentType = extension === "webm" ? "video/webm" : "video/mp4";
   const publicUrl = await writeBinaryFile(relativePath, buffer, contentType);
   if (typeof publicUrl === "string" && publicUrl) {

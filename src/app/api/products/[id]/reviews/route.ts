@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createProductReview, listProductReviews } from "@/lib/db/reviews-store";
+import {
+  createProductReview,
+  isValidReviewImagePath,
+  listProductReviews,
+  MAX_REVIEW_IMAGES,
+} from "@/lib/db/reviews-store";
 import { getProductById } from "@/lib/db/products-store";
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { resolveClientIp } from "@/lib/paytr";
@@ -8,6 +13,19 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 const REVIEW_LIMIT = 5;
 const REVIEW_WINDOW_MS = 60 * 60 * 1000;
+
+function normalizeImages(productId: string, value: unknown): string[] {
+  const list = Array.isArray(value)
+    ? value
+    : typeof value === "string" && value
+      ? [value]
+      : [];
+
+  return list
+    .map((item) => String(item).split("?")[0] ?? "")
+    .filter((src) => isValidReviewImagePath(productId, src))
+    .slice(0, MAX_REVIEW_IMAGES);
+}
 
 export async function GET(_request: Request, context: RouteContext) {
   const { id } = await context.params;
@@ -50,6 +68,7 @@ export async function POST(request: Request, context: RouteContext) {
     rating?: number;
     text?: string;
     website?: string;
+    images?: unknown;
   };
 
   if (body.website?.trim()) {
@@ -59,6 +78,7 @@ export async function POST(request: Request, context: RouteContext) {
   const authorName = body.authorName?.trim() ?? "";
   const text = body.text?.trim() ?? "";
   const rating = Number(body.rating);
+  const images = normalizeImages(id, body.images);
 
   if (!authorName || authorName.length < 2) {
     return NextResponse.json({ error: "Ad soyad gerekli." }, { status: 400 });
@@ -84,6 +104,7 @@ export async function POST(request: Request, context: RouteContext) {
     authorName,
     rating,
     body: text,
+    images,
   });
 
   return NextResponse.json({ review }, { status: 201 });

@@ -27,6 +27,15 @@ function publicPathFromUploadPathname(pathname: string): string {
   return clean.startsWith("uploads/") ? `/${clean}` : `/uploads/${clean}`;
 }
 
+function isProductVideoPath(pathname: string, productId: string): boolean {
+  const clean = pathname.replace(/^\//, "");
+  const prefix = `uploads/${productId}/`;
+  if (!clean.startsWith(prefix)) return false;
+
+  const filename = clean.slice(prefix.length);
+  return /^video(?:-\d+)?\.(?:mp4|webm)$/i.test(filename);
+}
+
 export async function POST(request: Request, context: RouteContext) {
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
@@ -53,9 +62,8 @@ export async function POST(request: Request, context: RouteContext) {
           );
         }
 
-        const expectedPrefix = `uploads/${id}/video.`;
         const clean = body.pathname.replace(/^\//, "");
-        if (!clean.startsWith(expectedPrefix)) {
+        if (!isProductVideoPath(clean, id)) {
           return NextResponse.json({ error: "Geçersiz video yolu." }, { status: 400 });
         }
 
@@ -90,8 +98,7 @@ export async function POST(request: Request, context: RouteContext) {
         request,
         onBeforeGenerateToken: async (pathname) => {
           const clean = pathname.replace(/^\//, "");
-          const expectedPrefix = `uploads/${id}/video.`;
-          if (!clean.startsWith(expectedPrefix)) {
+          if (!isProductVideoPath(clean, id)) {
             throw new Error("Geçersiz video yolu.");
           }
           if (!extensionFromPathname(clean)) {

@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { brand } from "@/lib/brand";
 import { getSiteContent } from "@/lib/site-content";
+import { resolveInstagramUrl } from "@/lib/social-links";
 
 const shopLinks = [
   { href: "/shop", label: "Mağaza" },
@@ -45,7 +46,15 @@ function SocialIcon({
 }
 
 export async function Footer() {
-  const { general } = await getSiteContent();
+  const { general, contact } = await getSiteContent();
+  const instagramCard = contact.cards.find((card) =>
+    card.title.toLocaleLowerCase("tr-TR").includes("instagram"),
+  );
+  const instagramUrl = resolveInstagramUrl(
+    instagramCard?.value,
+    instagramCard?.href,
+    brand.instagramUrl,
+  );
 
   return (
     <footer className="mt-auto border-t border-white/[0.06] bg-[#070708]">
@@ -67,7 +76,7 @@ export async function Footer() {
             </p>
 
             <div className="mt-6 flex items-center gap-2.5">
-              <SocialIcon href={brand.instagramUrl} label="Instagram">
+              <SocialIcon href={instagramUrl} label="Instagram">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <rect
                     x="3"

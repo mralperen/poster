@@ -162,6 +162,27 @@ export function ReviewModeration({
 
                     <p className="mt-2 text-sm leading-6 text-zinc-400">{review.body}</p>
 
+                    {review.images && review.images.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {review.images.map((src) => (
+                          <a
+                            key={src}
+                            href={src}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="relative block h-16 w-16 overflow-hidden rounded-[6px] border border-white/10 bg-zinc-950"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={src}
+                              alt="Yorum fotoğrafı"
+                              className="h-full w-full object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+
                     <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
                       <span>{review.authorName}</span>
                       <span>

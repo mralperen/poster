@@ -607,6 +607,11 @@ function ContactEditor({
       <PageIntroEditor sectionKey="contact" content={content} mutate={mutate} />
 
       <EditorBlock title="İletişim kartları">
+        <p className="mb-3 text-xs leading-5 text-zinc-500">
+          Instagram kartındaki “Değer” alanına kullanıcı adını (ör.
+          @theposteristcom), “Link” alanına tam adresi yazın. Footer Instagram
+          ikonu da bu karttan otomatik güncellenir.
+        </p>
         <div className="space-y-3">
           {content.contact.cards.map((card, index) => (
             <RowShell
