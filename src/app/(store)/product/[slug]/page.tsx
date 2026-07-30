@@ -10,6 +10,7 @@ import { ProductMobileBar } from "@/components/ProductMobileBar";
 import { ProductVideoButton } from "@/components/ProductVideoButton";
 import { brand } from "@/lib/brand";
 import { withProductImageVersion } from "@/lib/image-version";
+import { ensureProductVideo } from "@/lib/db/products-store";
 import { getProductBySlug, getPublishedProducts } from "@/lib/products";
 import { STANDARD_POSTER_SIZE_LABEL } from "@/lib/pricing";
 import { absoluteUrl, buildMetadata, productKeywords } from "@/lib/seo";
@@ -39,8 +40,9 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
-  if (!product || product.published === false) notFound();
+  const rawProduct = await getProductBySlug(slug, { forceRefresh: true });
+  if (!rawProduct || rawProduct.published === false) notFound();
+  const product = await ensureProductVideo(rawProduct);
   const displayProduct = withProductImageVersion(product);
 
   const [allProducts, siteContent, productReviews] = await Promise.all([

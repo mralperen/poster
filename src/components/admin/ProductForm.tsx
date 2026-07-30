@@ -54,7 +54,124 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   const [videoSrc, setVideoSrc] = useState(
     product?.video ? withImageVersion(product.video, product.updatedAt) : "",
   );
+  const [pendingVideoFile, setPendingVideoFile] = useState<File | null>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+
+  const uploadProductVideo = useCallback(async (productId: string, file: File) => {
+    const { videoExtensionFromFile } = await import("@/lib/video-upload");
+    const extension = videoExtensionFromFile(file);
+    if (!extension) {
+      throw new Error("Sadece MP4 veya WebM yükleyebilirsiniz.");
+    }
+    if (file.size > 80 * 1024 * 1024) {
+      throw new Error("Video en fazla 80 MB olabilir.");
+    }
+
+    const contentType =
+      file.type || (extension === "webm" ? "video/webm" : "video/mp4");
+    const pathname = `uploads/${productId}/video-${Date.now()}.${extension}`;
+
+    try {
+      const presignRes = await fetch(`/api/products/${productId}/upload-video`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "presign", pathname }),
+      });
+      const presignText = await presignRes.text();
+      let presignData: {
+        error?: string;
+        pathname?: string;
+        presignedUrl?: string;
+      } = {};
+      try {
+        presignData = JSON.parse(presignText) as typeof presignData;
+      } catch {
+        if (!presignRes.ok) {
+          throw new Error(presignText.slice(0, 180) || "Video imzası alınamadı.");
+        }
+      }
+      if (!presignRes.ok || !presignData.presignedUrl) {
+        throw new Error(presignData.error ?? "Video imzası alınamadı.");
+      }
+
+      const putRes = await fetch(presignData.presignedUrl, {
+        method: "PUT",
+        headers: { "Content-Type": contentType },
+        body: file,
+      });
+      if (!putRes.ok) {
+        const putText = await putRes.text().catch(() => "");
+        throw new Error(
+          putText.slice(0, 180) || `Blob yükleme hatası (${putRes.status}).`,
+        );
+      }
+
+      let blobUrl = "";
+      try {
+        const putJson = (await putRes.json()) as { url?: string };
+        if (typeof putJson.url === "string") blobUrl = putJson.url;
+      } catch {
+        /* PUT gövdesi JSON olmayabilir */
+      }
+
+      const finalPathname = presignData.pathname || pathname;
+      const registerRes = await fetch(`/api/products/${productId}/upload-video`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "register",
+          pathname: finalPathname,
+          url: blobUrl || undefined,
+        }),
+      });
+      const registerText = await registerRes.text();
+      let registerData: { error?: string; path?: string } = {};
+      try {
+        registerData = JSON.parse(registerText) as typeof registerData;
+      } catch {
+        if (!registerRes.ok) {
+          throw new Error(registerText.slice(0, 180) || "Video kaydı başarısız.");
+        }
+      }
+      if (!registerRes.ok) {
+        throw new Error(registerData.error ?? "Video kaydı başarısız.");
+      }
+      return String(registerData.path ?? `/${pathname}`);
+    } catch (clientError) {
+      if (file.size > 4 * 1024 * 1024) {
+        const reason =
+          clientError instanceof Error
+            ? clientError.message
+            : "Doğrudan Blob yüklemesi başarısız.";
+        throw new Error(`Video Blob'a yüklenemedi: ${reason}`);
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/products/${productId}/upload-video`, {
+        method: "POST",
+        body: formData,
+      });
+      const responseText = await res.text();
+      let data: { error?: string; path?: string } = {};
+      try {
+        data = JSON.parse(responseText) as typeof data;
+      } catch {
+        if (!res.ok) {
+          throw new Error(responseText.slice(0, 180) || "Video yüklenemedi.");
+        }
+      }
+      if (!res.ok) {
+        throw new Error(
+          data.error ??
+            (clientError instanceof Error
+              ? clientError.message
+              : "Video yüklenemedi."),
+        );
+      }
+      return String(data.path);
+    }
+  }, []);
 
   const previewViews = useMemo(() => {
     return Array.from({ length: viewCount }, (_, i) => {
@@ -145,7 +262,7 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   };
 
   const handleVideoChange = async (file: File | null) => {
-    if (!file || mode !== "edit" || !product) return;
+    if (!file) return;
 
     if (file.size > 80 * 1024 * 1024) {
       setError("Video en fazla 80 MB olabilir.");
@@ -153,150 +270,27 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     }
 
     const { videoExtensionFromFile } = await import("@/lib/video-upload");
-    const extension = videoExtensionFromFile(file);
-
-    if (!extension) {
+    if (!videoExtensionFromFile(file)) {
       setError("Sadece MP4 veya WebM yükleyebilirsiniz.");
       return;
     }
 
-    setUploadingVideo(true);
     setError("");
     setSuccess("");
 
-    // Aynı Blob yolunu ezmek CDN/tarayıcıda eski videoyu gösterebilir.
-    // Her değişimde yeni yol kullanarak cache'i kesin olarak kır.
-    const pathname = `uploads/${product.id}/video-${Date.now()}.${extension}`;
+    // Yeni üründe henüz id yok — dosyayı sakla, kayıt sonrası yükle
+    if (mode === "create" || !product) {
+      if (videoSrc.startsWith("blob:")) URL.revokeObjectURL(videoSrc);
+      setPendingVideoFile(file);
+      setVideoSrc(URL.createObjectURL(file));
+      setSuccess("Video seçildi. Ürünü kaydettiğinizde yüklenecek.");
+      return;
+    }
 
+    setUploadingVideo(true);
     try {
-      let publicPath = "";
-
-      try {
-        const contentType =
-          file.type || (extension === "webm" ? "video/webm" : "video/mp4");
-
-        // OIDC ile imzalı URL al → tarayıcıdan Blob'a doğrudan PUT.
-        // (Klasik client upload BLOB_READ_WRITE_TOKEN ister; bu projede OIDC var.)
-        const presignRes = await fetch(
-          `/api/products/${product.id}/upload-video`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type: "presign", pathname }),
-          },
-        );
-        const presignText = await presignRes.text();
-        let presignData: {
-          error?: string;
-          pathname?: string;
-          presignedUrl?: string;
-        } = {};
-        try {
-          presignData = JSON.parse(presignText) as typeof presignData;
-        } catch {
-          if (!presignRes.ok) {
-            throw new Error(presignText.slice(0, 180) || "Video imzası alınamadı.");
-          }
-        }
-        if (!presignRes.ok || !presignData.presignedUrl) {
-          throw new Error(presignData.error ?? "Video imzası alınamadı.");
-        }
-
-        const putRes = await fetch(presignData.presignedUrl, {
-          method: "PUT",
-          headers: { "Content-Type": contentType },
-          body: file,
-        });
-        if (!putRes.ok) {
-          const putText = await putRes.text().catch(() => "");
-          throw new Error(
-            putText.slice(0, 180) || `Blob yükleme hatası (${putRes.status}).`,
-          );
-        }
-
-        const finalPathname = presignData.pathname || pathname;
-        let blobUrl = "";
-        try {
-          const putJson = (await putRes.json()) as { url?: string };
-          if (typeof putJson.url === "string") blobUrl = putJson.url;
-        } catch {
-          /* PUT gövdesi JSON olmayabilir */
-        }
-
-        const registerRes = await fetch(
-          `/api/products/${product.id}/upload-video`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              type: "register",
-              pathname: finalPathname,
-              url: blobUrl || undefined,
-            }),
-          },
-        );
-        const registerText = await registerRes.text();
-        let registerData: { error?: string; path?: string } = {};
-        try {
-          registerData = JSON.parse(registerText) as {
-            error?: string;
-            path?: string;
-          };
-        } catch {
-          if (!registerRes.ok) {
-            throw new Error(
-              registerText.slice(0, 180) || "Video kaydı başarısız.",
-            );
-          }
-        }
-        if (!registerRes.ok) {
-          throw new Error(registerData.error ?? "Video kaydı başarısız.");
-        }
-        publicPath = String(registerData.path ?? `/${pathname}`);
-      } catch (clientError) {
-        // Vercel Functions 4.5 MB üstü istekleri kabul etmez. Büyük videoyu
-        // başarısız direct upload sonrasında sunucuya tekrar göndermeyin.
-        if (file.size > 4 * 1024 * 1024) {
-          const reason =
-            clientError instanceof Error
-              ? clientError.message
-              : "Doğrudan Blob yüklemesi başarısız.";
-          throw new Error(`Video Blob'a yüklenemedi: ${reason}`);
-        }
-
-        // Küçük dosya / lokal geliştirme için sunucu FormData yedeği
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch(`/api/products/${product.id}/upload-video`, {
-          method: "POST",
-          body: formData,
-        });
-        const responseText = await res.text();
-        let data: { error?: string; path?: string } = {};
-        try {
-          data = JSON.parse(responseText) as {
-            error?: string;
-            path?: string;
-          };
-        } catch {
-          if (!res.ok) {
-            throw new Error(
-              responseText.slice(0, 180) || "Video yüklenemedi.",
-            );
-          }
-        }
-        if (!res.ok) {
-          throw new Error(
-            data.error ??
-              (clientError instanceof Error
-                ? clientError.message
-                : "Video yüklenemedi."),
-          );
-        }
-        publicPath = String(data.path);
-      }
-
+      const publicPath = await uploadProductVideo(product.id, file);
+      setPendingVideoFile(null);
       setVideoSrc(`${publicPath.split("?")[0]}?v=${Date.now()}`);
       setSuccess("Ürün videosu yüklendi. Ayrıca “Kaydet”e basmanıza gerek yok.");
       router.refresh();
@@ -353,8 +347,17 @@ export function ProductForm({ product, mode }: ProductFormProps) {
           if (file) await uploadImage(data.id, slot, file);
         }
 
-        router.push(`/admin/products/${data.id}/edit`);
-        router.refresh();
+        if (pendingVideoFile) {
+          setUploadingVideo(true);
+          try {
+            await uploadProductVideo(data.id, pendingVideoFile);
+          } finally {
+            setUploadingVideo(false);
+          }
+        }
+
+        // Soft navigate bazen yeni ürünü bulamayınca 404 veriyor; tam yenile.
+        window.location.assign(`/admin/products/${data.id}/edit`);
         return;
       }
 
@@ -502,57 +505,58 @@ export function ProductForm({ product, mode }: ProductFormProps) {
           ))}
         </Section>
 
-        {mode === "edit" && product && (
-          <Section title="Ürün videosu">
-            <p className="text-xs leading-5 text-zinc-500">
-              MP4 veya WebM (en fazla 80 MB). Video seçilir seçilmez yüklenir;
-              ayrıca “Kaydet”e basmanız gerekmez. Mağazada ürün adının yanında
-              Video butonu görünür.
-            </p>
-            {videoSrc ? (
-              <video
-                key={videoSrc}
-                src={
-                  product
-                    ? `/api/products/${encodeURIComponent(product.id)}/video?v=${encodeURIComponent(videoSrc)}`
-                    : videoSrc
-                }
-                controls
-                muted
-                playsInline
-                className="mt-2 aspect-[9/16] max-h-[32rem] w-auto max-w-full rounded-lg bg-black object-cover"
-                onLoadedMetadata={(event) => {
-                  event.currentTarget.muted = true;
-                  event.currentTarget.volume = 0;
-                }}
-                onVolumeChange={(event) => {
-                  event.currentTarget.muted = true;
-                  event.currentTarget.volume = 0;
-                }}
-                onError={() => {
-                  setError(
-                    "Video dosyası oynatılamıyor. Lütfen MP4 olarak tekrar yükleyin.",
-                  );
-                  setSuccess("");
-                }}
-              />
-            ) : null}
-            <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-dashed border-white/15 px-4 py-2 text-xs text-zinc-400 hover:border-amber-400/30 hover:text-zinc-300">
-              {uploadingVideo
-                ? "Video yükleniyor…"
-                : videoSrc
-                  ? "Videoyu değiştir"
-                  : "Video yükle"}
-              <input
-                type="file"
-                accept="video/mp4,video/webm"
-                className="hidden"
-                disabled={uploadingVideo}
-                onChange={(e) => handleVideoChange(e.target.files?.[0] ?? null)}
-              />
-            </label>
-          </Section>
-        )}
+        <Section title="Ürün videosu">
+          <p className="text-xs leading-5 text-zinc-500">
+            MP4 veya WebM (en fazla 80 MB).{" "}
+            {mode === "edit"
+              ? "Video seçilir seçilmez yüklenir; ayrıca “Kaydet”e basmanız gerekmez."
+              : "Yeni üründe video seçebilirsiniz; ürün kaydedilince otomatik yüklenir."}{" "}
+            Mağazada ürün adının yanında Video butonu görünür.
+          </p>
+          {videoSrc ? (
+            <video
+              key={videoSrc}
+              src={
+                mode === "edit" && product && !videoSrc.startsWith("blob:")
+                  ? `/api/products/${encodeURIComponent(product.id)}/video?v=${encodeURIComponent(videoSrc)}`
+                  : videoSrc
+              }
+              controls
+              muted
+              playsInline
+              className="mt-2 aspect-[9/16] max-h-[32rem] w-auto max-w-full rounded-lg bg-black object-cover"
+              onLoadedMetadata={(event) => {
+                event.currentTarget.muted = true;
+                event.currentTarget.volume = 0;
+              }}
+              onVolumeChange={(event) => {
+                event.currentTarget.muted = true;
+                event.currentTarget.volume = 0;
+              }}
+              onError={() => {
+                if (videoSrc.startsWith("blob:")) return;
+                setError(
+                  "Video dosyası oynatılamıyor. Lütfen MP4 olarak tekrar yükleyin.",
+                );
+                setSuccess("");
+              }}
+            />
+          ) : null}
+          <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-dashed border-white/15 px-4 py-2 text-xs text-zinc-400 hover:border-amber-400/30 hover:text-zinc-300">
+            {uploadingVideo
+              ? "Video yükleniyor…"
+              : videoSrc
+                ? "Videoyu değiştir"
+                : "Video yükle"}
+            <input
+              type="file"
+              accept="video/mp4,video/webm"
+              className="hidden"
+              disabled={uploadingVideo || saving}
+              onChange={(e) => handleVideoChange(e.target.files?.[0] ?? null)}
+            />
+          </label>
+        </Section>
 
         <Section title="Satış fiyatı">
           <PriceField

@@ -9,7 +9,8 @@ type PageProps = { params: Promise<{ id: string }> };
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = await params;
-  const product = await getProductById(id);
+  // Yeni oluşturulan ürün başka instance'da henüz cache'te olmayabilir
+  const product = await getProductById(id, { forceRefresh: true });
   if (!product) notFound();
 
   return (

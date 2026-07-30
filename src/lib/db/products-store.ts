@@ -110,14 +110,43 @@ export async function getProductById(
   return fresh.find((p) => p.id === id);
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | undefined> {
-  const products = await readAll();
+export async function getProductBySlug(
+  slug: string,
+  options?: { forceRefresh?: boolean },
+): Promise<Product | undefined> {
+  const products = await readAll({ forceRefresh: options?.forceRefresh });
   const hit = products.find((p) => p.slug === slug);
   if (hit) return hit;
 
   invalidateTextCache(DATA_FILE);
   const fresh = await readAll({ forceRefresh: true });
   return fresh.find((p) => p.slug === slug);
+}
+
+/**
+ * Katalogda video yoksa Blob'daki son video dosyasını bulup kayda yazar.
+ * Mağaza sayfasının stale cache yüzünden Video butonunu gizlemesini engeller.
+ */
+export async function ensureProductVideo(product: Product): Promise<Product> {
+  if (product.video?.startsWith("/uploads/")) return product;
+
+  const { findLatestProductVideoPath } = await import(
+    "@/lib/video-upload-server"
+  );
+  const recovered = await findLatestProductVideoPath(product.id);
+  if (!recovered) return product;
+
+  try {
+    await registerProductVideoPath(product.id, recovered);
+  } catch {
+    /* kayıt yarışsa bile buton için yolu döndür */
+  }
+
+  return {
+    ...product,
+    video: recovered,
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
@@ -136,7 +165,7 @@ export function viewPathsForProduct(id: string, viewCount: 2 | 3): string[] {
 }
 
 export async function createProduct(input: ProductInput): Promise<Product> {
-  const products = await readAll();
+  const products = await readAll({ forceRefresh: true });
 
   if (products.some((p) => p.slug === input.slug)) {
     throw new Error("Bu URL slug zaten kullanılıyor.");
@@ -202,6 +231,19 @@ export async function updateProduct(
   const latestProducts = await readAll({ forceRefresh: true });
   const latest = latestProducts.find((p) => p.id === id) ?? current;
 
+  // Form kaydı videoyu asla silmesin; stale Blob okuması eski kaydı ezmesin.
+  let video = latest.video ?? current.video;
+  if (!video?.startsWith("/uploads/")) {
+    try {
+      const { findLatestProductVideoPath } = await import(
+        "@/lib/video-upload-server"
+      );
+      video = (await findLatestProductVideoPath(id)) ?? video;
+    } catch {
+      /* ignore */
+    }
+  }
+
   const updated: Product = {
     ...latest,
     ...input,
@@ -213,8 +255,7 @@ export async function updateProduct(
       input.viewCount && input.viewCount !== latest.viewCount
         ? thumbnail
         : latest.thumbnail,
-    // Medya alanlarını form kaydı asla silmesin
-    video: latest.video,
+    video,
     updatedAt: new Date().toISOString(),
   };
 
@@ -259,7 +300,7 @@ export async function saveViewImage(
   }
 
   const publicPath = `/uploads/${id}/view-${slotIndex}.jpg`;
-  const products = await readAll();
+  const products = await readAll({ forceRefresh: true });
   const index = products.findIndex((p) => p.id === id);
   if (index === -1) throw new Error("Ürün bulunamadı.");
   const wasReady = await productHasAllViews(products[index]);
