@@ -180,7 +180,6 @@ export function ProductForm({ product, mode }: ProductFormProps) {
         const blob = await upload(pathname, file, {
           access: "private",
           handleUploadUrl: `/api/products/${product.id}/upload-video`,
-          multipart: true,
           contentType: file.type,
         });
 
@@ -195,13 +194,36 @@ export function ProductForm({ product, mode }: ProductFormProps) {
             }),
           },
         );
-        const registerData = await registerRes.json();
+        const registerText = await registerRes.text();
+        let registerData: { error?: string; path?: string } = {};
+        try {
+          registerData = JSON.parse(registerText) as {
+            error?: string;
+            path?: string;
+          };
+        } catch {
+          if (!registerRes.ok) {
+            throw new Error(
+              registerText.slice(0, 180) || "Video kaydı başarısız.",
+            );
+          }
+        }
         if (!registerRes.ok) {
           throw new Error(registerData.error ?? "Video kaydı başarısız.");
         }
         publicPath = String(registerData.path ?? `/${pathname}`);
       } catch (clientError) {
-        // Blob client upload yoksa / lokal: sunucu FormData yolu
+        // Vercel Functions 4.5 MB üstü istekleri kabul etmez. Büyük videoyu
+        // başarısız direct upload sonrasında sunucuya tekrar göndermeyin.
+        if (file.size > 4 * 1024 * 1024) {
+          const reason =
+            clientError instanceof Error
+              ? clientError.message
+              : "Doğrudan Blob yüklemesi başarısız.";
+          throw new Error(`Video Blob'a yüklenemedi: ${reason}`);
+        }
+
+        // Küçük dosya / lokal geliştirme için sunucu FormData yedeği
         const formData = new FormData();
         formData.append("file", file);
 
@@ -209,7 +231,20 @@ export function ProductForm({ product, mode }: ProductFormProps) {
           method: "POST",
           body: formData,
         });
-        const data = await res.json();
+        const responseText = await res.text();
+        let data: { error?: string; path?: string } = {};
+        try {
+          data = JSON.parse(responseText) as {
+            error?: string;
+            path?: string;
+          };
+        } catch {
+          if (!res.ok) {
+            throw new Error(
+              responseText.slice(0, 180) || "Video yüklenemedi.",
+            );
+          }
+        }
         if (!res.ok) {
           throw new Error(
             data.error ??
