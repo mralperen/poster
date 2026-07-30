@@ -172,18 +172,57 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       let publicPath = "";
 
       try {
-        const { upload } = await import("@vercel/blob/client");
-        const blob = await upload(pathname, file, {
-          // Blob store private; public access token üretimi başarısız olur.
-          access: "private",
-          handleUploadUrl: `/api/products/${product.id}/upload-video`,
-          contentType:
-            file.type ||
-            (extension === "webm" ? "video/webm" : "video/mp4"),
-          multipart: file.size > 4 * 1024 * 1024,
-        });
+        const contentType =
+          file.type || (extension === "webm" ? "video/webm" : "video/mp4");
 
-        const finalPathname = blob.pathname || pathname;
+        // OIDC ile imzalı URL al → tarayıcıdan Blob'a doğrudan PUT.
+        // (Klasik client upload BLOB_READ_WRITE_TOKEN ister; bu projede OIDC var.)
+        const presignRes = await fetch(
+          `/api/products/${product.id}/upload-video`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "presign", pathname }),
+          },
+        );
+        const presignText = await presignRes.text();
+        let presignData: {
+          error?: string;
+          pathname?: string;
+          presignedUrl?: string;
+        } = {};
+        try {
+          presignData = JSON.parse(presignText) as typeof presignData;
+        } catch {
+          if (!presignRes.ok) {
+            throw new Error(presignText.slice(0, 180) || "Video imzası alınamadı.");
+          }
+        }
+        if (!presignRes.ok || !presignData.presignedUrl) {
+          throw new Error(presignData.error ?? "Video imzası alınamadı.");
+        }
+
+        const putRes = await fetch(presignData.presignedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": contentType },
+          body: file,
+        });
+        if (!putRes.ok) {
+          const putText = await putRes.text().catch(() => "");
+          throw new Error(
+            putText.slice(0, 180) || `Blob yükleme hatası (${putRes.status}).`,
+          );
+        }
+
+        const finalPathname = presignData.pathname || pathname;
+        let blobUrl = "";
+        try {
+          const putJson = (await putRes.json()) as { url?: string };
+          if (typeof putJson.url === "string") blobUrl = putJson.url;
+        } catch {
+          /* PUT gövdesi JSON olmayabilir */
+        }
+
         const registerRes = await fetch(
           `/api/products/${product.id}/upload-video`,
           {
@@ -192,7 +231,7 @@ export function ProductForm({ product, mode }: ProductFormProps) {
             body: JSON.stringify({
               type: "register",
               pathname: finalPathname,
-              url: blob.url,
+              url: blobUrl || undefined,
             }),
           },
         );

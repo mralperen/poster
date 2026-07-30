@@ -1,6 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { issueSignedToken, presignUrl } from "@vercel/blob";
 import { isAdminAuthenticated } from "@/lib/auth";
 import {
   getProductById,
@@ -19,6 +19,12 @@ import { verifyUploadBlobExists } from "@/lib/video-upload-server";
 type RouteContext = { params: Promise<{ id: string }> };
 
 const MAX_BYTES = 80 * 1024 * 1024;
+const ALLOWED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+  "application/mp4",
+];
 
 export const maxDuration = 60;
 
@@ -34,6 +40,59 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     if (contentType.includes("application/json")) {
       const body = (await request.json()) as Record<string, unknown>;
+
+      if (body.type === "presign" && typeof body.pathname === "string") {
+        if (!(await isAdminAuthenticated())) {
+          return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+        }
+
+        if (!isRemoteStorage()) {
+          return NextResponse.json(
+            {
+              error:
+                "Blob depolama aktif değil. Vercel Storage → Blob bağlayın.",
+            },
+            { status: 400 },
+          );
+        }
+
+        const clean = body.pathname.replace(/^\//, "");
+        if (!isProductVideoPath(clean, id)) {
+          return NextResponse.json({ error: "Geçersiz video yolu." }, { status: 400 });
+        }
+        if (!extensionFromPathname(clean)) {
+          return NextResponse.json(
+            { error: "Sadece MP4 veya WebM kabul edilir." },
+            { status: 400 },
+          );
+        }
+
+        // OIDC ile imzalı URL — handleUpload'ın istediği BLOB_READ_WRITE_TOKEN gerekmez.
+        const token = await issueSignedToken({
+          pathname: clean,
+          operations: ["put"],
+          allowedContentTypes: ALLOWED_VIDEO_TYPES,
+          maximumSizeInBytes: MAX_BYTES,
+          validUntil: Date.now() + 60 * 60 * 1000,
+        });
+
+        const { presignedUrl } = await presignUrl(token, {
+          operation: "put",
+          pathname: clean,
+          access: "private",
+          allowedContentTypes: ALLOWED_VIDEO_TYPES,
+          maximumSizeInBytes: MAX_BYTES,
+          addRandomSuffix: false,
+          allowOverwrite: false,
+          validUntil: Date.now() + 30 * 60 * 1000,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          pathname: clean,
+          presignedUrl,
+        });
+      }
 
       if (body.type === "register" && typeof body.pathname === "string") {
         if (!(await isAdminAuthenticated())) {
@@ -87,62 +146,7 @@ export async function POST(request: Request, context: RouteContext) {
         });
       }
 
-      if (!isRemoteStorage()) {
-        return NextResponse.json(
-          {
-            error:
-              "Blob depolama aktif değil. Vercel Storage → Blob bağlayın veya küçük dosya için doğrudan yüklemeyi deneyin.",
-          },
-          { status: 400 },
-        );
-      }
-
-      const jsonResponse = await handleUpload({
-        body: body as unknown as HandleUploadBody,
-        request,
-        onBeforeGenerateToken: async (pathname) => {
-          if (!(await isAdminAuthenticated())) {
-            throw new Error("Yetkisiz.");
-          }
-
-          const clean = pathname.replace(/^\//, "");
-          if (!isProductVideoPath(clean, id)) {
-            throw new Error("Geçersiz video yolu.");
-          }
-          if (!extensionFromPathname(clean)) {
-            throw new Error("Sadece MP4 veya WebM yükleyebilirsiniz.");
-          }
-
-          return {
-            allowedContentTypes: [
-              "video/mp4",
-              "video/webm",
-              "video/quicktime",
-              "application/mp4",
-            ],
-            maximumSizeInBytes: MAX_BYTES,
-            // İstemci zaten video-{timestamp}.mp4 kullanıyor; ek suffix yol uyuşmazlığı yaratır.
-            addRandomSuffix: false,
-            allowOverwrite: false,
-            tokenPayload: JSON.stringify({ productId: id }),
-          };
-        },
-        onUploadCompleted: async ({ blob }) => {
-          const clean = blob.pathname.replace(/^\//, "");
-          if (!(await verifyUploadBlobExists(clean))) return;
-          if (
-            blob.url &&
-            !blob.url.includes(".private.blob.vercel-storage.com")
-          ) {
-            rememberMediaUrl(clean, blob.url);
-          }
-          await registerProductVideoPath(id, publicPathFromUploadPathname(clean));
-          revalidatePath(`/product/${product.slug}`);
-          revalidatePath(`/admin/products/${id}/edit`);
-        },
-      });
-
-      return NextResponse.json(jsonResponse);
+      return NextResponse.json({ error: "Geçersiz istek." }, { status: 400 });
     }
 
     if (!(await isAdminAuthenticated())) {
@@ -186,6 +190,7 @@ export async function POST(request: Request, context: RouteContext) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Yükleme başarısız.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message === "Yetkisiz." ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }
