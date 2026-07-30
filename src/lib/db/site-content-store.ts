@@ -88,8 +88,7 @@ const fallbackContent: SiteContent = {
     taxNumber: "",
     shippingFee: 49,
     freeShippingThreshold: 500,
-    campaignText:
-      "Yalnızca 3 poster al, 2 poster parası öde — en uygun fiyatlı poster bizden",
+    campaignText: "3 poster al, 2 öde",
     paymentNotice:
       "Kart bilgileri The Posterist sunucusunda tutulmaz; ödeme PayTR güvenli ödeme ekranı üzerinden tamamlanır.",
   },
@@ -103,7 +102,7 @@ const fallbackContent: SiteContent = {
       "Her poster A3 sabit ölçüde hazırlanır, görseller arası geçiş kontrol edilir ve korumalı ambalajla gönderilir. Koleksiyonlar hediye, stüdyo, ofis ve ev dekorasyonu için seçili kombinasyonlardan oluşur.",
     setTitle: "3 al 2 öde",
     setDescription:
-      "Kampanya yalnızca sepette tam 3 poster varken geçerlidir. En uygun fiyatlı poster otomatik bedava olur; 4 veya daha fazla posterde indirim uygulanmaz.",
+      "Sepete 3 veya daha fazla poster ekleyince en uygun fiyatlı 1 poster otomatik bedava olur. Daha fazla ürün eklediğinizde indirim korunur; yalnızca 1 poster hediye edilir.",
     guideItems: [
       {
         title: "Sürükle",
@@ -111,7 +110,7 @@ const fallbackContent: SiteContent = {
       },
       {
         title: "3 al 2 öde",
-        text: "Tam 3 poster alınca 2 fiyat ödersiniz; en uygun fiyatlı poster bizden.",
+        text: "3 veya daha fazla posterde en uygun fiyatlı 1 poster bedava olur.",
       },
       {
         title: "Güvenle teslim al",
@@ -325,6 +324,7 @@ const LEGACY_CAMPAIGN_TEXTS = new Set([
   "2 posterde %10, 3+ posterde %15 set indirimi",
   "2 posterde %10, 3+ posterde %15 set indirimi.",
   "3 poster al, 2 öde — en uygun fiyatlı poster bizden",
+  "Yalnızca 3 poster al, 2 poster parası öde — en uygun fiyatlı poster bizden",
 ]);
 
 function migrateCampaignText(text: string): string {
@@ -346,7 +346,7 @@ function migrateGuideItems(items: InfoItem[]): InfoItem[] {
   const buy3Guide =
     fallbackContent.home.guideItems.find((g) => /3 al 2/i.test(g.title)) ?? {
       title: "3 al 2 öde",
-      text: "Tam 3 poster alınca 2 fiyat ödersiniz; en uygun fiyatlı poster bizden.",
+      text: "3 veya daha fazla posterde en uygun fiyatlı 1 poster bedava olur.",
     };
 
   return items.map((item) => {

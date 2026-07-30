@@ -262,8 +262,8 @@ function GeneralEditor({
         </div>
         <p className="mt-3 rounded-[8px] border border-amber-300/20 bg-amber-300/10 px-3 py-2.5 text-xs leading-5 text-amber-100/90">
           Sepet indirimi sabit: <strong className="text-amber-50">3 al 2 öde</strong>{" "}
-          (yalnızca sepette tam 3 poster varken en uygun fiyatlı 1 poster
-          bedava). 4 veya daha fazla posterde indirim uygulanmaz.
+          (sepette 3 veya daha fazla poster varken en uygun fiyatlı 1 poster
+          bedava). Daha fazla ürün eklense de yalnızca 1 poster hediye edilir.
         </p>
         <div className="mt-4 grid gap-4">
           <Field

@@ -9,7 +9,7 @@ const items = [
   },
   {
     title: "3 al 2 öde",
-    text: "Yalnızca tam 3 posterde en uygun fiyatlı poster bizden.",
+    text: "3+ posterde en uygun fiyatlı 1 poster bedava.",
   },
   {
     title: "Kolay iade",

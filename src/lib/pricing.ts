@@ -5,7 +5,7 @@ export const STANDARD_POSTER_SIZE_LABEL = "A3 / 29,7 x 42 cm";
 /** Çerçevesiz seçeneğinde standart fiyattan düşülecek tutar (₺) */
 export const FRAMELESS_DISCOUNT = 100;
 
-/** Kampanya yalnızca sepette tam 3 poster varken geçerlidir. */
+/** 3 veya daha fazla posterde yalnızca 1 poster bedava. */
 export const BUY_N_GET_FREE_EVERY = 3;
 
 export const FRAME_OPTION_LABELS: Record<FrameOption, string> = {
@@ -79,14 +79,14 @@ export function expandUnitPrices(
 }
 
 /**
- * 3 al 2 öde: yalnızca tam 3 poster varsa en ucuzu bedava.
- * 1–2 veya 4+ poster için indirim uygulanmaz.
+ * 3 al 2 öde: sepette 3+ poster varsa en ucuz 1 poster bedava.
+ * Ürün sayısı artsa da ikinci bir ücretsiz poster verilmez.
  */
 export function getBuy3Pay2Discount(unitPrices: number[]): {
   freePosterCount: number;
   discountTotal: number;
 } {
-  if (unitPrices.length !== BUY_N_GET_FREE_EVERY) {
+  if (unitPrices.length < BUY_N_GET_FREE_EVERY) {
     return { freePosterCount: 0, discountTotal: 0 };
   }
 

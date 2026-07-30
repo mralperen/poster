@@ -74,7 +74,7 @@ export function BundlePicker({
         </div>
 
         <p className="mt-2 text-xs leading-5 text-amber-100/75">
-          Kampanya yalnızca tam 3 poster için geçerli; en uygun fiyatlısı bizden.
+          3 veya daha fazla posterde en uygun fiyatlı 1 poster bedava.
         </p>
 
         <div className="mt-3 flex items-center gap-2.5">

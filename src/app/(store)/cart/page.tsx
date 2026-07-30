@@ -161,11 +161,6 @@ export default function CartPage() {
               3 al 2 öde aktif: {freePosterCount} poster bedava (
               {formatPrice(discountTotal)} tasarruf)
             </div>
-          ) : itemCount > 3 ? (
-            <div className="mb-5 rounded-[8px] border border-amber-200/20 bg-amber-300/10 p-4 text-sm text-amber-50">
-              3 al 2 öde kampanyası yalnızca tam 3 poster için geçerlidir.
-              İndirimden yararlanmak için sepeti 3 postere düşürün.
-            </div>
           ) : null}
 
           {freeShippingRemaining > 0 ? (

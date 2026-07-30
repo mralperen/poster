@@ -104,7 +104,7 @@ export function ShopProductGrid({ products }: ShopProductGridProps) {
 
       <div className="mt-4 flex items-center justify-between text-xs text-zinc-500">
         <span>{visibleProducts.length} ürün gösteriliyor</span>
-        <span>Yalnızca tam 3 posterde: 3 al 2 öde</span>
+        <span>3+ posterde 1 poster bedava</span>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
