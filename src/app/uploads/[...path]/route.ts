@@ -19,42 +19,6 @@ const CONTENT_TYPES: Record<string, string> = {
 // CDN'nin yanıtı cache'lemesine izin ver — her istekte Function+Blob yakılmaz
 export const revalidate = 86400;
 
-function parseByteRange(
-  value: string,
-  totalSize: number,
-): { start: number; end: number } | null {
-  const match = /^bytes=(\d*)-(\d*)$/i.exec(value.trim());
-  if (!match) return null;
-
-  const startRaw = match[1];
-  const endRaw = match[2];
-
-  if (!startRaw && !endRaw) return null;
-
-  if (!startRaw) {
-    const suffixLength = Number(endRaw);
-    if (!Number.isInteger(suffixLength) || suffixLength <= 0) return null;
-    return {
-      start: Math.max(0, totalSize - suffixLength),
-      end: totalSize - 1,
-    };
-  }
-
-  const start = Number(startRaw);
-  const end = endRaw ? Math.min(Number(endRaw), totalSize - 1) : totalSize - 1;
-  if (
-    !Number.isInteger(start) ||
-    !Number.isInteger(end) ||
-    start < 0 ||
-    end < start ||
-    start >= totalSize
-  ) {
-    return null;
-  }
-
-  return { start, end };
-}
-
 async function streamVideo(
   request: Request,
   relativePath: string,
@@ -70,31 +34,24 @@ async function streamVideo(
 
     if (!result?.stream) return null;
 
-    const totalSize = result.blob.size;
-    const range = rangeHeader ? parseByteRange(rangeHeader, totalSize) : null;
-
-    if (rangeHeader && !range) {
-      return new Response(null, {
-        status: 416,
-        headers: { "Content-Range": `bytes */${totalSize}` },
-      });
-    }
+    // Range yanıtında blob.size sadece dönen parçanın boyutudur.
+    // Gerçek toplam boyut ve aralık SDK'nın ham yanıt başlıklarındadır.
+    const upstreamContentRange = result.headers.get("content-range");
+    const upstreamContentLength = result.headers.get("content-length");
 
     const headers = new Headers({
       "Accept-Ranges": "bytes",
       "Cache-Control": "public, s-maxage=31536000, max-age=31536000, immutable",
       "Content-Type": result.blob.contentType || contentType,
+      "Content-Length": upstreamContentLength ?? String(result.blob.size),
     });
 
-    if (range) {
-      headers.set("Content-Range", `bytes ${range.start}-${range.end}/${totalSize}`);
-      headers.set("Content-Length", String(range.end - range.start + 1));
-    } else {
-      headers.set("Content-Length", String(totalSize));
+    if (upstreamContentRange) {
+      headers.set("Content-Range", upstreamContentRange);
     }
 
     return new Response(result.stream, {
-      status: range ? 206 : 200,
+      status: upstreamContentRange ? 206 : 200,
       headers,
     });
   } catch {
