@@ -28,7 +28,8 @@ async function streamVideo(
     const { get } = await import("@vercel/blob");
     const rangeHeader = request.headers.get("range");
 
-    for (const access of ["public", "private"] as const) {
+    // Store private; önce private dene (Spider-Man ve yeni yüklemeler).
+    for (const access of ["private", "public"] as const) {
       try {
         const result = await get(relativePath, {
           access,
@@ -76,7 +77,11 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const publicUrl = getCachedMediaUrl(relativePath);
-  if (publicUrl) {
+  // Private Blob URL'leri tarayıcıdan 403 verir; sadece gerçek public CDN'e yönlendir.
+  if (
+    publicUrl &&
+    !publicUrl.includes(".private.blob.vercel-storage.com")
+  ) {
     return NextResponse.redirect(publicUrl, 308);
   }
 

@@ -63,7 +63,11 @@ export async function POST(request: Request, context: RouteContext) {
           );
         }
 
-        if (typeof body.url === "string" && body.url.startsWith("http")) {
+        if (
+          typeof body.url === "string" &&
+          body.url.startsWith("http") &&
+          !body.url.includes(".private.blob.vercel-storage.com")
+        ) {
           rememberMediaUrl(clean, body.url);
         }
 
@@ -126,7 +130,12 @@ export async function POST(request: Request, context: RouteContext) {
         onUploadCompleted: async ({ blob }) => {
           const clean = blob.pathname.replace(/^\//, "");
           if (!(await verifyUploadBlobExists(clean))) return;
-          if (blob.url) rememberMediaUrl(clean, blob.url);
+          if (
+            blob.url &&
+            !blob.url.includes(".private.blob.vercel-storage.com")
+          ) {
+            rememberMediaUrl(clean, blob.url);
+          }
           await registerProductVideoPath(id, publicPathFromUploadPathname(clean));
           revalidatePath(`/product/${product.slug}`);
           revalidatePath(`/admin/products/${id}/edit`);

@@ -47,7 +47,11 @@ export async function findLatestProductVideoPath(
       ? latest.pathname
       : `/${latest.pathname}`;
 
-    if (latest.url) {
+    // Private store URL'lerini cache'leme — uploads route 403'e yönlendirirdi.
+    if (
+      latest.url &&
+      !latest.url.includes(".private.blob.vercel-storage.com")
+    ) {
       rememberMediaUrl(latest.pathname.replace(/^\//, ""), latest.url);
     }
 

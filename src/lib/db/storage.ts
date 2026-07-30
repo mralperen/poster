@@ -124,6 +124,8 @@ export function getCachedMediaUrl(relativePath: string): string | undefined {
 }
 
 export function rememberMediaUrl(relativePath: string, url: string): void {
+  // Private Blob URL tarayıcıdan açılamaz; cache'e yazmak uploads'ta 403 üretir.
+  if (url.includes(".private.blob.vercel-storage.com")) return;
   mediaUrlCache().set(relativePath.replace(/^\//, ""), url);
 }
 
