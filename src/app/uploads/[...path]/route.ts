@@ -27,36 +27,41 @@ async function streamVideo(
   try {
     const { get } = await import("@vercel/blob");
     const rangeHeader = request.headers.get("range");
-    const result = await get(relativePath, {
-      access: "private",
-      // Video yeni yüklendiğinde/üzerine yazıldığında Blob edge cache eski
-      // 404'ü döndürebiliyor. Medya yanıtımız kendi CDN cache'ini kullanır.
-      useCache: false,
-      ...(rangeHeader ? { headers: { Range: rangeHeader } } : {}),
-    });
 
-    if (!result?.stream) return null;
+    for (const access of ["public", "private"] as const) {
+      try {
+        const result = await get(relativePath, {
+          access,
+          useCache: false,
+          ...(rangeHeader ? { headers: { Range: rangeHeader } } : {}),
+        });
 
-    // Range yanıtında blob.size sadece dönen parçanın boyutudur.
-    // Gerçek toplam boyut ve aralık SDK'nın ham yanıt başlıklarındadır.
-    const upstreamContentRange = result.headers.get("content-range");
-    const upstreamContentLength = result.headers.get("content-length");
+        if (!result?.stream) continue;
 
-    const headers = new Headers({
-      "Accept-Ranges": "bytes",
-      "Cache-Control": "public, s-maxage=31536000, max-age=31536000, immutable",
-      "Content-Type": result.blob.contentType || contentType,
-      "Content-Length": upstreamContentLength ?? String(result.blob.size),
-    });
+        const upstreamContentRange = result.headers.get("content-range");
+        const upstreamContentLength = result.headers.get("content-length");
 
-    if (upstreamContentRange) {
-      headers.set("Content-Range", upstreamContentRange);
+        const headers = new Headers({
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "public, s-maxage=31536000, max-age=31536000, immutable",
+          "Content-Type": result.blob.contentType || contentType,
+          "Content-Length": upstreamContentLength ?? String(result.blob.size),
+        });
+
+        if (upstreamContentRange) {
+          headers.set("Content-Range", upstreamContentRange);
+        }
+
+        return new Response(result.stream, {
+          status: upstreamContentRange ? 206 : 200,
+          headers,
+        });
+      } catch {
+        /* try other access mode */
+      }
     }
 
-    return new Response(result.stream, {
-      status: upstreamContentRange ? 206 : 200,
-      headers,
-    });
+    return null;
   } catch {
     return null;
   }

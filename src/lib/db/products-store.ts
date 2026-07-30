@@ -301,7 +301,7 @@ export async function saveProductVideo(
     rememberMediaUrl(relativePath, publicUrl);
   }
 
-  const publicPath = `/uploads/${id}/video.${extension}`;
+  const publicPath = `/${relativePath}`;
   return registerProductVideoPath(id, publicPath);
 }
 

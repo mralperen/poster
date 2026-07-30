@@ -152,12 +152,8 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       return;
     }
 
-    const extension =
-      file.type === "video/webm"
-        ? "webm"
-        : file.type === "video/mp4"
-          ? "mp4"
-          : null;
+    const { videoExtensionFromFile } = await import("@/lib/video-upload");
+    const extension = videoExtensionFromFile(file);
 
     if (!extension) {
       setError("Sadece MP4 veya WebM yükleyebilirsiniz.");
@@ -178,11 +174,14 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       try {
         const { upload } = await import("@vercel/blob/client");
         const blob = await upload(pathname, file, {
-          access: "private",
+          access: "public",
           handleUploadUrl: `/api/products/${product.id}/upload-video`,
-          contentType: file.type,
+          contentType:
+            file.type ||
+            (extension === "webm" ? "video/webm" : "video/mp4"),
         });
 
+        const finalPathname = blob.pathname || pathname;
         const registerRes = await fetch(
           `/api/products/${product.id}/upload-video`,
           {
@@ -190,7 +189,8 @@ export function ProductForm({ product, mode }: ProductFormProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type: "register",
-              pathname: blob.pathname || pathname,
+              pathname: finalPathname,
+              url: blob.url,
             }),
           },
         );

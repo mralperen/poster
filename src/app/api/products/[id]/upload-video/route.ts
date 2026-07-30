@@ -7,34 +7,20 @@ import {
   registerProductVideoPath,
   saveProductVideo,
 } from "@/lib/db/products-store";
-import { isRemoteStorage } from "@/lib/db/storage";
+import { isRemoteStorage, rememberMediaUrl } from "@/lib/db/storage";
+import {
+  extensionFromPathname,
+  isProductVideoPath,
+  publicPathFromUploadPathname,
+  verifyUploadBlobExists,
+  videoExtensionFromFile,
+} from "@/lib/video-upload";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 const MAX_BYTES = 80 * 1024 * 1024;
 
 export const maxDuration = 60;
-
-function extensionFromPathname(pathname: string): "mp4" | "webm" | null {
-  const lower = pathname.toLowerCase();
-  if (lower.endsWith(".webm")) return "webm";
-  if (lower.endsWith(".mp4")) return "mp4";
-  return null;
-}
-
-function publicPathFromUploadPathname(pathname: string): string {
-  const clean = pathname.replace(/^\//, "");
-  return clean.startsWith("uploads/") ? `/${clean}` : `/uploads/${clean}`;
-}
-
-function isProductVideoPath(pathname: string, productId: string): boolean {
-  const clean = pathname.replace(/^\//, "");
-  const prefix = `uploads/${productId}/`;
-  if (!clean.startsWith(prefix)) return false;
-
-  const filename = clean.slice(prefix.length);
-  return /^video(?:-[a-zA-Z0-9_-]+)?\.(?:mp4|webm)$/i.test(filename);
-}
 
 export async function POST(request: Request, context: RouteContext) {
   const { id } = await context.params;
@@ -65,6 +51,20 @@ export async function POST(request: Request, context: RouteContext) {
         const clean = body.pathname.replace(/^\//, "");
         if (!isProductVideoPath(clean, id)) {
           return NextResponse.json({ error: "Geçersiz video yolu." }, { status: 400 });
+        }
+
+        if (!(await verifyUploadBlobExists(clean))) {
+          return NextResponse.json(
+            {
+              error:
+                "Video Blob'da bulunamadı. Yükleme tamamlanmadan kaydedilmiş olabilir; tekrar deneyin.",
+            },
+            { status: 404 },
+          );
+        }
+
+        if (typeof body.url === "string" && body.url.startsWith("http")) {
+          rememberMediaUrl(clean, body.url);
         }
 
         const publicPath = await registerProductVideoPath(
@@ -110,17 +110,23 @@ export async function POST(request: Request, context: RouteContext) {
           }
 
           return {
-            allowedContentTypes: ["video/mp4", "video/webm"],
+            allowedContentTypes: [
+              "video/mp4",
+              "video/webm",
+              "video/quicktime",
+              "application/mp4",
+            ],
             maximumSizeInBytes: MAX_BYTES,
-            // Eski açık admin sekmeleri video.mp4 gönderse bile Blob her
-            // yüklemede benzersiz yol üretsin; CDN overwrite sorunu oluşmasın.
-            addRandomSuffix: true,
+            // İstemci zaten video-{timestamp}.mp4 kullanıyor; ek suffix yol uyuşmazlığı yaratır.
+            addRandomSuffix: false,
             allowOverwrite: false,
             tokenPayload: JSON.stringify({ productId: id }),
           };
         },
         onUploadCompleted: async ({ blob }) => {
           const clean = blob.pathname.replace(/^\//, "");
+          if (!(await verifyUploadBlobExists(clean))) return;
+          if (blob.url) rememberMediaUrl(clean, blob.url);
           await registerProductVideoPath(id, publicPathFromUploadPathname(clean));
           revalidatePath(`/product/${product.slug}`);
           revalidatePath(`/admin/products/${id}/edit`);
@@ -148,12 +154,7 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    const extension =
-      file.type === "video/webm"
-        ? "webm"
-        : file.type === "video/mp4"
-          ? "mp4"
-          : null;
+    const extension = videoExtensionFromFile(file);
 
     if (!extension) {
       return NextResponse.json(
