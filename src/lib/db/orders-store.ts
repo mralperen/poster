@@ -279,3 +279,24 @@ export async function recordPaytrCallback(
 export async function listPaytrCallbacks(): Promise<StoredPaytrCallback[]> {
   return readArray<StoredPaytrCallback>(CALLBACKS_FILE);
 }
+
+/** Tüm sipariş ve PayTR callback kayıtlarını siler (istatistikler sıfırlanır). */
+export async function clearAllSalesData(): Promise<{
+  ordersCleared: number;
+  callbacksCleared: number;
+}> {
+  const [orders, callbacks] = await Promise.all([
+    readOrders(),
+    listPaytrCallbacks(),
+  ]);
+
+  await Promise.all([
+    writeOrders([]),
+    writeArray(CALLBACKS_FILE, []),
+  ]);
+
+  return {
+    ordersCleared: orders.length,
+    callbacksCleared: callbacks.length,
+  };
+}

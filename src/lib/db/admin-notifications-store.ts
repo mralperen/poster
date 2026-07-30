@@ -102,6 +102,12 @@ export async function markAllNotificationsRead(): Promise<void> {
   await writeAll(updated);
 }
 
+export async function clearAllNotifications(): Promise<number> {
+  const entries = await readAll();
+  await writeAll([]);
+  return entries.length;
+}
+
 export async function syncNotificationsFromPaidOrders(
   orders: StoredOrder[],
 ): Promise<void> {

@@ -57,6 +57,9 @@ type AdminOrdersListProps = {
 export function AdminOrdersList({ orders }: AdminOrdersListProps) {
   const router = useRouter();
   const [filter, setFilter] = useState<OrderFilter>("pending");
+  const [clearing, setClearing] = useState(false);
+  const [clearMessage, setClearMessage] = useState("");
+  const [clearError, setClearError] = useState("");
 
   const counts = useMemo(
     () => ({
@@ -79,6 +82,33 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
     return () => window.clearInterval(timer);
   }, [counts.pending, router]);
 
+  const clearSales = async () => {
+    const confirmed = window.confirm(
+      "Tüm siparişler, satış istatistikleri ve ödeme bildirimleri kalıcı olarak silinecek. Emin misiniz?",
+    );
+    if (!confirmed) return;
+
+    setClearing(true);
+    setClearMessage("");
+    setClearError("");
+
+    try {
+      const response = await fetch("/api/admin/sales/clear", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Temizlenemedi.");
+      }
+      setClearMessage(
+        `Temizlendi: ${data.ordersCleared ?? 0} sipariş, ${data.callbacksCleared ?? 0} ödeme kaydı.`,
+      );
+      router.refresh();
+    } catch (err) {
+      setClearError(err instanceof Error ? err.message : "Bir hata oluştu.");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   return (
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -89,13 +119,34 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
             bekliyor
           </p>
         </div>
-        <Link
-          href="/admin/payments"
-          className="w-fit rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:text-white"
-        >
-          Ödeme ayarları
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={clearSales}
+            disabled={clearing || orders.length === 0}
+            className="rounded-lg border border-red-400/30 px-4 py-2 text-sm font-medium text-red-300 hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {clearing ? "Temizleniyor…" : "Satışları temizle"}
+          </button>
+          <Link
+            href="/admin/payments"
+            className="w-fit rounded-lg border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:text-white"
+          >
+            Ödeme ayarları
+          </Link>
+        </div>
       </div>
+
+      {clearMessage ? (
+        <p className="mt-4 rounded-[8px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          {clearMessage}
+        </p>
+      ) : null}
+      {clearError ? (
+        <p className="mt-4 rounded-[8px] border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+          {clearError}
+        </p>
+      ) : null}
 
       <div className="mt-6 flex flex-wrap gap-2">
         {filters.map((item) => {
