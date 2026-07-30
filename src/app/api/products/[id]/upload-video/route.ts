@@ -12,9 +12,9 @@ import {
   extensionFromPathname,
   isProductVideoPath,
   publicPathFromUploadPathname,
-  verifyUploadBlobExists,
   videoExtensionFromFile,
 } from "@/lib/video-upload";
+import { verifyUploadBlobExists } from "@/lib/video-upload-server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 

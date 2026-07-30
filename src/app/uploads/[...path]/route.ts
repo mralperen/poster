@@ -86,6 +86,20 @@ export async function GET(request: Request, context: RouteContext) {
   if (ext === ".mp4" || ext === ".webm") {
     const response = await streamVideo(request, relativePath, contentType);
     if (response) return response;
+
+    // Eski kayıt video.mp4 derken dosya video-{timestamp}.mp4 olabilir.
+    if (segments.length >= 2) {
+      const productId = segments[0];
+      const { findLatestProductVideoPath } = await import(
+        "@/lib/video-upload-server"
+      );
+      const recovered = await findLatestProductVideoPath(productId);
+      if (recovered && recovered !== `/${relativePath}`) {
+        const target = new URL(recovered, request.url);
+        target.searchParams.set("v", String(Date.now()));
+        return NextResponse.redirect(target, 307);
+      }
+    }
   }
 
   const buffer = await readBinaryFile(relativePath);

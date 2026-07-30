@@ -174,11 +174,13 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       try {
         const { upload } = await import("@vercel/blob/client");
         const blob = await upload(pathname, file, {
-          access: "public",
+          // Blob store private; public access token üretimi başarısız olur.
+          access: "private",
           handleUploadUrl: `/api/products/${product.id}/upload-video`,
           contentType:
             file.type ||
             (extension === "webm" ? "video/webm" : "video/mp4"),
+          multipart: file.size > 4 * 1024 * 1024,
         });
 
         const finalPathname = blob.pathname || pathname;
@@ -470,7 +472,12 @@ export function ProductForm({ product, mode }: ProductFormProps) {
             </p>
             {videoSrc ? (
               <video
-                src={videoSrc}
+                key={videoSrc}
+                src={
+                  product
+                    ? `/api/products/${encodeURIComponent(product.id)}/video?v=${encodeURIComponent(videoSrc)}`
+                    : videoSrc
+                }
                 controls
                 muted
                 playsInline
@@ -482,6 +489,12 @@ export function ProductForm({ product, mode }: ProductFormProps) {
                 onVolumeChange={(event) => {
                   event.currentTarget.muted = true;
                   event.currentTarget.volume = 0;
+                }}
+                onError={() => {
+                  setError(
+                    "Video dosyası oynatılamıyor. Lütfen MP4 olarak tekrar yükleyin.",
+                  );
+                  setSuccess("");
                 }}
               />
             ) : null}

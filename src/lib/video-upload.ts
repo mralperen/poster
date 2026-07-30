@@ -1,4 +1,4 @@
-import { getCachedMediaUrl, isRemoteStorage } from "@/lib/db/storage";
+/** Tarayıcı ve sunucuda güvenle kullanılabilen video yolu yardımcıları. */
 
 export function videoExtensionFromFile(file: File): "mp4" | "webm" | null {
   if (file.type === "video/webm") return "webm";
@@ -36,25 +36,4 @@ export function isProductVideoPath(pathname: string, productId: string): boolean
 
   const filename = clean.slice(prefix.length);
   return /^video(?:[-a-zA-Z0-9_.]+)?\.(?:mp4|webm)$/i.test(filename);
-}
-
-export async function verifyUploadBlobExists(pathname: string): Promise<boolean> {
-  const clean = pathname.replace(/^\//, "");
-  if (getCachedMediaUrl(clean)) return true;
-  if (!isRemoteStorage()) return true;
-
-  try {
-    const { get } = await import("@vercel/blob");
-    for (const access of ["public", "private"] as const) {
-      try {
-        const result = await get(clean, { access, useCache: false });
-        if (result?.stream) return true;
-      } catch {
-        /* try other access */
-      }
-    }
-  } catch {
-    /* not found */
-  }
-  return false;
 }
