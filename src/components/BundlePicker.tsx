@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { isUploadImageSrc } from "@/lib/image-version";
 import { formatPrice } from "@/lib/format";
-import { getBundleDiscountRate, type PricingConfig } from "@/lib/pricing";
+import { getBundlePricing, type PricingConfig } from "@/lib/pricing";
 import type { Product } from "@/lib/types";
 
 type BundlePickerProps = {
@@ -32,20 +32,21 @@ export function BundlePicker({
 
   const setItems = [current, ...selectedProducts];
   const setCount = setItems.length;
-  const rawTotal = setItems.reduce((sum, item) => sum + item.basePrice, 0);
-  const discountRate = getBundleDiscountRate(setCount, pricing);
-  const savings = Math.round(rawTotal * discountRate);
-  const total = rawTotal - savings;
+  const unitPrices = setItems.map((item) => item.basePrice);
+  const { rawTotal, discount: savings, total, freePosterCount } = getBundlePricing(
+    unitPrices,
+    pricing,
+  );
   const canAdd = selectedIds.length > 0;
 
   const progress =
     selectedIds.length >= 2 ? 100 : selectedIds.length === 1 ? 66 : 33;
   const progressLabel =
     selectedIds.length >= 2
-      ? "Maksimum set indirimi"
+      ? "3 al 2 öde aktif"
       : selectedIds.length === 1
-        ? "1 poster daha eklersen %15"
-        : "1 poster seç";
+        ? "1 poster daha → 1 bedava"
+        : "2 poster daha seç";
 
   const toggleProduct = (id: string) => {
     setSelectedIds((prev) => {
@@ -61,24 +62,19 @@ export function BundlePicker({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <p className="text-[11px] font-bold tracking-[0.16em] text-amber-200 uppercase">
-              Set indirimi
+              3 al 2 öde
             </p>
             <h3 className="mt-1 text-base font-semibold text-white">
               Kendi setini oluştur
             </h3>
           </div>
-          <div className="flex shrink-0 gap-1.5">
-            <span className="rounded-full bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-black">
-              2 farklı %{pricing.bundleSecondPercent}
-            </span>
-            <span className="rounded-full border border-emerald-300/40 bg-emerald-400/15 px-2.5 py-1 text-[11px] font-bold text-emerald-100">
-              3+ farklı %{pricing.bundleThirdPercent}
-            </span>
-          </div>
+          <span className="rounded-full bg-amber-300 px-2.5 py-1 text-[11px] font-bold text-black">
+            3 poster → 2 fiyat
+          </span>
         </div>
 
         <p className="mt-2 text-xs leading-5 text-amber-100/75">
-          Farklı posterlerden seç — indirim sepette otomatik uygulanır.
+          Kampanya yalnızca tam 3 poster için geçerli; en uygun fiyatlısı bizden.
         </p>
 
         <div className="mt-3 flex items-center gap-2.5">
@@ -105,7 +101,7 @@ export function BundlePicker({
             className="bundle-picker-trigger flex min-h-11 w-full items-center justify-center gap-2 rounded-[8px] border border-amber-300/35 bg-amber-300/10 px-4 text-sm font-semibold text-amber-100 transition-all hover:border-amber-300/55 hover:bg-amber-300/15"
           >
             <span className="text-base">+</span>
-            Poster seç, set indirimini aç
+            Poster seç, 3 al 2 öde
           </button>
         ) : (
           <div className="bundle-picker-open space-y-3">
@@ -192,17 +188,28 @@ export function BundlePicker({
                   <div>
                     <p className="text-[10px] font-semibold tracking-wide text-zinc-500 uppercase">
                       Seçilen set ({setCount} poster)
+                      {freePosterCount > 0
+                        ? ` · ${freePosterCount} bedava`
+                        : ""}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <span className="text-sm text-zinc-500 line-through">
-                        {formatPrice(rawTotal)}
-                      </span>
-                      <span className="text-lg font-bold text-white">
-                        {formatPrice(total)}
-                      </span>
-                      <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">
-                        {formatPrice(savings)} kazan
-                      </span>
+                      {savings > 0 ? (
+                        <>
+                          <span className="text-sm text-zinc-500 line-through">
+                            {formatPrice(rawTotal)}
+                          </span>
+                          <span className="text-lg font-bold text-white">
+                            {formatPrice(total)}
+                          </span>
+                          <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold text-emerald-200">
+                            {formatPrice(savings)} kazan
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-lg font-bold text-white">
+                          {formatPrice(rawTotal)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -212,7 +219,9 @@ export function BundlePicker({
                   onClick={() => onAdd(selectedProducts)}
                   className="mt-3 min-h-11 w-full rounded-[8px] bg-amber-300 text-sm font-bold text-black transition-colors hover:bg-amber-200 active:scale-[0.99]"
                 >
-                  Seti sepete ekle — {formatPrice(savings)} indirim
+                  {savings > 0
+                    ? `Seti sepete ekle — ${formatPrice(savings)} indirim`
+                    : "Seti sepete ekle"}
                 </button>
               </div>
             )}

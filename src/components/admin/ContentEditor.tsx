@@ -259,28 +259,15 @@ function GeneralEditor({
               })
             }
           />
-          <NumberField
-            label="2 ürün indirimi (%)"
-            value={content.general.bundleSecondPercent}
-            onChange={(value) =>
-              mutate((draft) => {
-                draft.general.bundleSecondPercent = value;
-              })
-            }
-          />
-          <NumberField
-            label="3+ ürün indirimi (%)"
-            value={content.general.bundleThirdPercent}
-            onChange={(value) =>
-              mutate((draft) => {
-                draft.general.bundleThirdPercent = value;
-              })
-            }
-          />
         </div>
+        <p className="mt-3 rounded-[8px] border border-amber-300/20 bg-amber-300/10 px-3 py-2.5 text-xs leading-5 text-amber-100/90">
+          Sepet indirimi sabit: <strong className="text-amber-50">3 al 2 öde</strong>{" "}
+          (yalnızca sepette tam 3 poster varken en uygun fiyatlı 1 poster
+          bedava). 4 veya daha fazla posterde indirim uygulanmaz.
+        </p>
         <div className="mt-4 grid gap-4">
           <Field
-            label="Kampanya metni"
+            label="Kampanya metni (üst bant)"
             value={content.general.campaignText}
             onChange={(value) =>
               mutate((draft) => {

@@ -52,8 +52,6 @@ export default async function RootLayout({
           pricing={{
             shippingFee: general.shippingFee,
             freeShippingThreshold: general.freeShippingThreshold,
-            bundleSecondPercent: general.bundleSecondPercent,
-            bundleThirdPercent: general.bundleThirdPercent,
           }}
         >
           {children}

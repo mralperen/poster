@@ -62,8 +62,6 @@ export default async function ProductPage({ params }: PageProps) {
   const pricing = {
     shippingFee: siteContent.general.shippingFee,
     freeShippingThreshold: siteContent.general.freeShippingThreshold,
-    bundleSecondPercent: siteContent.general.bundleSecondPercent,
-    bundleThirdPercent: siteContent.general.bundleThirdPercent,
   };
 
   return (

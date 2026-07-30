@@ -19,9 +19,8 @@ export default function CartPage() {
     subtotal,
     rawSubtotal,
     discountTotal,
-    bundleDiscountRate,
+    freePosterCount,
     itemCount,
-    distinctPosterCount,
     shipping,
     total,
     freeShippingRemaining,
@@ -52,7 +51,7 @@ export default function CartPage() {
             Sepet <span className="text-zinc-600">({itemCount} ürün)</span>
           </h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Paket indirimi ve kargo ücreti otomatik hesaplanır.
+            Paket: 3 al 2 öde ve kargo ücreti otomatik hesaplanır.
           </p>
         </div>
         <Link href="/shop" className="text-sm text-amber-300 hover:text-amber-100">
@@ -143,10 +142,12 @@ export default function CartPage() {
         </div>
 
         <aside className="rounded-[8px] border border-white/10 bg-white/[0.025] p-5 lg:sticky lg:top-24">
-          {distinctPosterCount < 2 ? (
+          {itemCount < 3 ? (
             <div className="mb-5 rounded-[8px] border border-amber-200/20 bg-amber-300/10 p-4 text-sm text-amber-50">
               <p>
-                Yanına farklı bir poster ekleyin, set indirimi otomatik açılsın.
+                {3 - itemCount === 1
+                  ? "1 poster daha ekleyin, 3 al 2 öde açılsın — en uygun fiyatlı poster bizden."
+                  : `${3 - itemCount} poster daha ekleyin, 3 al 2 öde açılsın.`}
               </p>
               <Link
                 href="/shop"
@@ -157,8 +158,13 @@ export default function CartPage() {
             </div>
           ) : discountTotal > 0 ? (
             <div className="mb-5 rounded-[8px] border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm text-emerald-100">
-              Farklı poster set indirimi aktif: %{Math.round(bundleDiscountRate * 100)}{" "}
-              ({formatPrice(discountTotal)} tasarruf)
+              3 al 2 öde aktif: {freePosterCount} poster bedava (
+              {formatPrice(discountTotal)} tasarruf)
+            </div>
+          ) : itemCount > 3 ? (
+            <div className="mb-5 rounded-[8px] border border-amber-200/20 bg-amber-300/10 p-4 text-sm text-amber-50">
+              3 al 2 öde kampanyası yalnızca tam 3 poster için geçerlidir.
+              İndirimden yararlanmak için sepeti 3 postere düşürün.
             </div>
           ) : null}
 
@@ -192,7 +198,7 @@ export default function CartPage() {
             </div>
             {discountTotal > 0 && (
               <div className="flex justify-between text-emerald-300">
-                <span>Paket indirimi</span>
+                <span>3 al 2 öde</span>
                 <span>-{formatPrice(discountTotal)}</span>
               </div>
             )}

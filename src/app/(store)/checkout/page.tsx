@@ -13,7 +13,7 @@ export default function CheckoutPage() {
     subtotal,
     rawSubtotal,
     discountTotal,
-    bundleDiscountRate,
+    freePosterCount,
     shipping,
     total,
   } = useCart();
@@ -172,7 +172,10 @@ export default function CheckoutPage() {
             </div>
             {discountTotal > 0 && (
               <div className="flex justify-between text-emerald-300">
-                <span>Paket indirimi (%{Math.round(bundleDiscountRate * 100)})</span>
+                <span>
+                  3 al 2 öde
+                  {freePosterCount > 0 ? ` (${freePosterCount} bedava)` : ""}
+                </span>
                 <span>-{formatPrice(discountTotal)}</span>
               </div>
             )}

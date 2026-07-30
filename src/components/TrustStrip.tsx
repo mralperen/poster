@@ -8,8 +8,8 @@ const items = [
     text: "Posterler hasar görmemesi için özenle paketlenir.",
   },
   {
-    title: "Set indirimi",
-    text: "2 posterde %10, 3+ posterde %15 indirim.",
+    title: "3 al 2 öde",
+    text: "Yalnızca tam 3 posterde en uygun fiyatlı poster bizden.",
   },
   {
     title: "Kolay iade",

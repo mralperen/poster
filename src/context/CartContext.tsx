@@ -35,6 +35,7 @@ type CartContextValue = {
   clearCart: () => void;
   itemCount: number;
   distinctPosterCount: number;
+  freePosterCount: number;
   rawSubtotal: number;
   discountTotal: number;
   bundleDiscountRate: number;

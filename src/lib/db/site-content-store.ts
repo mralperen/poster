@@ -40,6 +40,10 @@ export type SiteContent = {
     taxNumber: string;
     campaignText: string;
     paymentNotice: string;
+    /** @deprecated Eski yüzde set indirimi — artık kullanılmıyor */
+    bundleSecondPercent?: number;
+    /** @deprecated Eski yüzde set indirimi — artık kullanılmıyor */
+    bundleThirdPercent?: number;
   };
   home: PageIntro & {
     storyTitle: string;
@@ -84,9 +88,8 @@ const fallbackContent: SiteContent = {
     taxNumber: "",
     shippingFee: 49,
     freeShippingThreshold: 500,
-    bundleSecondPercent: 10,
-    bundleThirdPercent: 15,
-    campaignText: "2 posterde %10, 3+ posterde %15 set indirimi",
+    campaignText:
+      "Yalnızca 3 poster al, 2 poster parası öde — en uygun fiyatlı poster bizden",
     paymentNotice:
       "Kart bilgileri The Posterist sunucusunda tutulmaz; ödeme PayTR güvenli ödeme ekranı üzerinden tamamlanır.",
   },
@@ -98,17 +101,17 @@ const fallbackContent: SiteContent = {
     storyTitle: "Duvara asılan tek kare değil, hareket eden bir obje.",
     storyText:
       "Her poster A3 sabit ölçüde hazırlanır, görseller arası geçiş kontrol edilir ve korumalı ambalajla gönderilir. Koleksiyonlar hediye, stüdyo, ofis ve ev dekorasyonu için seçili kombinasyonlardan oluşur.",
-    setTitle: "Birlikte daha iyi çalışan posterler",
+    setTitle: "3 al 2 öde",
     setDescription:
-      "Farklı posterleri beraber alınca indirim otomatik uygulanır. Aynı üründen almak zorunda değilsiniz; koleksiyon hissini büyütmek için farklı eserleri eşleştirebilirsiniz.",
+      "Kampanya yalnızca sepette tam 3 poster varken geçerlidir. En uygun fiyatlı poster otomatik bedava olur; 4 veya daha fazla posterde indirim uygulanmaz.",
     guideItems: [
       {
         title: "Sürükle",
         text: "Ürün görselini parmakla veya mouse ile sağa sola kaydırıp geçişi deneyin.",
       },
       {
-        title: "Set yap",
-        text: "İkinci posterde %10, üç ve üzeri posterde %15 indirim otomatik açılır.",
+        title: "3 al 2 öde",
+        text: "Tam 3 poster alınca 2 fiyat ödersiniz; en uygun fiyatlı poster bizden.",
       },
       {
         title: "Güvenle teslim al",
@@ -142,7 +145,7 @@ const fallbackContent: SiteContent = {
       {
         name: "Mert A.",
         meta: "Hediye siparişi",
-        text: "Normal posterden daha özel hissettiriyor. Set indirimiyle iki farklı işi birlikte aldım.",
+        text: "Normal posterden daha özel hissettiriyor. 3 al 2 öde ile üç farklı işi birlikte aldım.",
       },
       {
         name: "Studio Nova",
@@ -318,6 +321,42 @@ function asText(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
+const LEGACY_CAMPAIGN_TEXTS = new Set([
+  "2 posterde %10, 3+ posterde %15 set indirimi",
+  "2 posterde %10, 3+ posterde %15 set indirimi.",
+  "3 poster al, 2 öde — en uygun fiyatlı poster bizden",
+]);
+
+function migrateCampaignText(text: string): string {
+  if (!text || LEGACY_CAMPAIGN_TEXTS.has(text)) {
+    return fallbackContent.general.campaignText;
+  }
+  return text;
+}
+
+function looksLikeLegacyPercentDiscount(text: string): boolean {
+  return /%\s*\d+|set indirimi|ikinci posterde/i.test(text);
+}
+
+function migrateLegacyDiscountCopy(text: string, replacement: string): string {
+  return looksLikeLegacyPercentDiscount(text) ? replacement : text;
+}
+
+function migrateGuideItems(items: InfoItem[]): InfoItem[] {
+  const buy3Guide =
+    fallbackContent.home.guideItems.find((g) => /3 al 2/i.test(g.title)) ?? {
+      title: "3 al 2 öde",
+      text: "Tam 3 poster alınca 2 fiyat ödersiniz; en uygun fiyatlı poster bizden.",
+    };
+
+  return items.map((item) => {
+    if (!looksLikeLegacyPercentDiscount(`${item.title} ${item.text}`)) {
+      return item;
+    }
+    return { ...buy3Guide };
+  });
+}
+
 function asNumber(value: unknown, fallback: number, min = 0, max = Infinity): number {
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
@@ -411,21 +450,11 @@ export function sanitizeSiteContent(input: unknown): SiteContent {
         value.general?.freeShippingThreshold,
         fallbackContent.general.freeShippingThreshold,
       ),
-      bundleSecondPercent: asNumber(
-        value.general?.bundleSecondPercent,
-        fallbackContent.general.bundleSecondPercent,
-        0,
-        100,
-      ),
-      bundleThirdPercent: asNumber(
-        value.general?.bundleThirdPercent,
-        fallbackContent.general.bundleThirdPercent,
-        0,
-        100,
-      ),
-      campaignText: asText(
-        value.general?.campaignText,
-        fallbackContent.general.campaignText,
+      campaignText: migrateCampaignText(
+        asText(
+          value.general?.campaignText,
+          fallbackContent.general.campaignText,
+        ),
       ),
       paymentNotice: asText(
         value.general?.paymentNotice ??
@@ -437,14 +466,22 @@ export function sanitizeSiteContent(input: unknown): SiteContent {
       ...sanitizeIntro(value.home, fallbackContent.home),
       storyTitle: asText(value.home?.storyTitle, fallbackContent.home.storyTitle),
       storyText: asText(value.home?.storyText, fallbackContent.home.storyText),
-      setTitle: asText(value.home?.setTitle, fallbackContent.home.setTitle),
-      setDescription: asText(
-        value.home?.setDescription,
+      setTitle: migrateLegacyDiscountCopy(
+        asText(value.home?.setTitle, fallbackContent.home.setTitle),
+        fallbackContent.home.setTitle,
+      ),
+      setDescription: migrateLegacyDiscountCopy(
+        asText(
+          value.home?.setDescription,
+          fallbackContent.home.setDescription,
+        ),
         fallbackContent.home.setDescription,
       ),
-      guideItems: sanitizeInfoItems(
-        value.home?.guideItems,
-        fallbackContent.home.guideItems,
+      guideItems: migrateGuideItems(
+        sanitizeInfoItems(
+          value.home?.guideItems,
+          fallbackContent.home.guideItems,
+        ),
       ),
       trustBadges: sanitizeInfoItems(
         value.home?.trustBadges,

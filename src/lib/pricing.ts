@@ -5,6 +5,9 @@ export const STANDARD_POSTER_SIZE_LABEL = "A3 / 29,7 x 42 cm";
 /** Çerçevesiz seçeneğinde standart fiyattan düşülecek tutar (₺) */
 export const FRAMELESS_DISCOUNT = 100;
 
+/** Kampanya yalnızca sepette tam 3 poster varken geçerlidir. */
+export const BUY_N_GET_FREE_EVERY = 3;
+
 export const FRAME_OPTION_LABELS: Record<FrameOption, string> = {
   framed: "Çerçeveli",
   frameless: "Çerçevesiz",
@@ -34,19 +37,18 @@ export function normalizeFrameOption(value: unknown): FrameOption {
 export type PricingConfig = {
   shippingFee: number;
   freeShippingThreshold: number;
-  bundleSecondPercent: number;
-  bundleThirdPercent: number;
 };
 
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   shippingFee: 49,
   freeShippingThreshold: 500,
-  bundleSecondPercent: 10,
-  bundleThirdPercent: 15,
 };
 
 export function normalizePricingConfig(
-  input?: Partial<PricingConfig>,
+  input?: Partial<PricingConfig> & {
+    bundleSecondPercent?: number;
+    bundleThirdPercent?: number;
+  },
 ): PricingConfig {
   return {
     shippingFee: Number.isFinite(input?.shippingFee)
@@ -55,43 +57,61 @@ export function normalizePricingConfig(
     freeShippingThreshold: Number.isFinite(input?.freeShippingThreshold)
       ? Math.max(0, Number(input?.freeShippingThreshold))
       : DEFAULT_PRICING_CONFIG.freeShippingThreshold,
-    bundleSecondPercent: Number.isFinite(input?.bundleSecondPercent)
-      ? Math.max(0, Math.min(100, Number(input?.bundleSecondPercent)))
-      : DEFAULT_PRICING_CONFIG.bundleSecondPercent,
-    bundleThirdPercent: Number.isFinite(input?.bundleThirdPercent)
-      ? Math.max(0, Math.min(100, Number(input?.bundleThirdPercent)))
-      : DEFAULT_PRICING_CONFIG.bundleThirdPercent,
   };
-}
-
-export function getBundleDiscountRate(
-  distinctPosterCount: number,
-  config?: Partial<PricingConfig>,
-): number {
-  const pricing = normalizePricingConfig(config);
-  if (distinctPosterCount >= 3) return pricing.bundleThirdPercent / 100;
-  if (distinctPosterCount >= 2) return pricing.bundleSecondPercent / 100;
-  return 0;
 }
 
 export function countDistinctPosters(items: Pick<CartItem, "productId">[]): number {
   return new Set(items.map((item) => item.productId)).size;
 }
 
+/** Sepet satırlarını birim fiyat listesine açar (adet kadar tekrar). */
+export function expandUnitPrices(
+  items: Array<{ unitPrice: number; quantity: number }>,
+): number[] {
+  const prices: number[] = [];
+  for (const item of items) {
+    const qty = Math.max(0, Math.floor(item.quantity));
+    for (let i = 0; i < qty; i++) {
+      prices.push(item.unitPrice);
+    }
+  }
+  return prices;
+}
+
+/**
+ * 3 al 2 öde: yalnızca tam 3 poster varsa en ucuzu bedava.
+ * 1–2 veya 4+ poster için indirim uygulanmaz.
+ */
+export function getBuy3Pay2Discount(unitPrices: number[]): {
+  freePosterCount: number;
+  discountTotal: number;
+} {
+  if (unitPrices.length !== BUY_N_GET_FREE_EVERY) {
+    return { freePosterCount: 0, discountTotal: 0 };
+  }
+
+  const sorted = [...unitPrices].sort((a, b) => a - b);
+  const freePosterCount = 1;
+  const discountTotal = sorted[0] ?? 0;
+
+  return { freePosterCount, discountTotal };
+}
+
+/** Bundle picker / önizleme için fiyat listesinden 3 al 2 öde. */
 export function getBundlePricing(
-  unitPrice: number,
-  quantity: number,
-  config?: Partial<PricingConfig>,
+  unitPrices: number[],
+  _config?: Partial<PricingConfig>,
 ) {
-  const rawTotal = unitPrice * quantity;
-  // Aynı posterden birden fazla adet — set indirimi yok.
-  void config;
+  const rawTotal = unitPrices.reduce((sum, price) => sum + price, 0);
+  const { freePosterCount, discountTotal } = getBuy3Pay2Discount(unitPrices);
+  const discountRate = rawTotal > 0 ? discountTotal / rawTotal : 0;
 
   return {
     rawTotal,
-    discount: 0,
-    discountRate: 0,
-    total: rawTotal,
+    discount: discountTotal,
+    discountRate,
+    freePosterCount,
+    total: rawTotal - discountTotal,
   };
 }
 
@@ -106,14 +126,17 @@ export function getCartPricing(
     (sum, item) => sum + item.unitPrice * item.quantity,
     0,
   );
-  const bundleDiscountRate = getBundleDiscountRate(distinctPosterCount, pricing);
-  const discountTotal = Math.round(rawSubtotal * bundleDiscountRate);
+  const { freePosterCount, discountTotal } = getBuy3Pay2Discount(
+    expandUnitPrices(items),
+  );
+  const bundleDiscountRate = rawSubtotal > 0 ? discountTotal / rawSubtotal : 0;
   const subtotal = rawSubtotal - discountTotal;
   const shipping = getShippingFee(subtotal, pricing);
 
   return {
     itemCount,
     distinctPosterCount,
+    freePosterCount,
     rawSubtotal,
     bundleDiscountRate,
     discountTotal,

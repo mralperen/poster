@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const metadata = buildMetadata({
   title: "Lentiküler Poster Mağazası | 3D Koleksiyon — The Posterist",
   description:
-    "Anime, sanat ve özel tasarım 3D lentiküler posterler. Açıya göre değişen premium A3 baskılar; set indirimi ve korumalı kargo.",
+    "Anime, sanat ve özel tasarım 3D lentiküler posterler. Açıya göre değişen premium A3 baskılar; 3 al 2 öde ve korumalı kargo.",
   path: "/shop",
   keywords: ["lentiküler poster mağazası", "poster satın al", "3d poster koleksiyon"],
 });

@@ -40,7 +40,7 @@ function buildItemsRows(order: StoredOrder): string {
   if (order.totals.discountTotal > 0) {
     rows.push(`
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid #2a2a2e;color:#86efac;font-size:14px;">Set indirimi</td>
+        <td style="padding:10px 0;border-bottom:1px solid #2a2a2e;color:#86efac;font-size:14px;">3 al 2 öde</td>
         <td style="padding:10px 0;border-bottom:1px solid #2a2a2e;color:#86efac;font-size:14px;text-align:right;">−${formatPrice(order.totals.discountTotal)}</td>
       </tr>`);
   }
