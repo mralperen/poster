@@ -437,8 +437,17 @@ export function ProductForm({ product, mode }: ProductFormProps) {
               <video
                 src={videoSrc}
                 controls
+                muted
                 playsInline
-                className="mt-2 max-h-52 w-full rounded-lg bg-black"
+                className="mt-2 aspect-[9/16] max-h-[32rem] w-auto max-w-full rounded-lg bg-black object-cover"
+                onLoadedMetadata={(event) => {
+                  event.currentTarget.muted = true;
+                  event.currentTarget.volume = 0;
+                }}
+                onVolumeChange={(event) => {
+                  event.currentTarget.muted = true;
+                  event.currentTarget.volume = 0;
+                }}
               />
             ) : null}
             <label className="mt-3 inline-flex cursor-pointer rounded-lg border border-dashed border-white/15 px-4 py-2 text-xs text-zinc-400 hover:border-amber-400/30 hover:text-zinc-300">

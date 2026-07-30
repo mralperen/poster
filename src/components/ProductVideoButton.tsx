@@ -35,7 +35,10 @@ export function ProductVideoButton({ src, title }: ProductVideoButtonProps) {
               className="absolute inset-0 bg-black/85 backdrop-blur-sm"
               onClick={() => setOpen(false)}
             />
-            <div className="relative z-10 w-full max-w-3xl overflow-hidden rounded-[10px] border border-white/10 bg-black shadow-2xl">
+            <div
+              className="relative z-10 overflow-hidden rounded-[10px] border border-white/10 bg-black shadow-2xl"
+              style={{ width: "min(24rem, 46vh, calc(100vw - 2rem))" }}
+            >
               <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                 <p className="truncate pr-4 text-sm font-medium text-white">{title}</p>
                 <button
@@ -51,8 +54,17 @@ export function ProductVideoButton({ src, title }: ProductVideoButtonProps) {
                 src={src}
                 controls
                 autoPlay
+                muted
                 playsInline
-                className="aspect-video w-full bg-black"
+                className="aspect-[9/16] w-full bg-black object-cover"
+                onLoadedMetadata={(event) => {
+                  event.currentTarget.muted = true;
+                  event.currentTarget.volume = 0;
+                }}
+                onVolumeChange={(event) => {
+                  event.currentTarget.muted = true;
+                  event.currentTarget.volume = 0;
+                }}
               />
             </div>
           </div>,
