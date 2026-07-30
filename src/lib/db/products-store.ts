@@ -199,7 +199,7 @@ export async function updateProduct(
     viewCount === 3 ? (views[1] ?? views[0]) : (views[0] ?? current.thumbnail);
 
   // Kaydetmeden hemen önce tekrar oku — video yüklemesiyle yarışmayı önler
-  const latestProducts = await readAll();
+  const latestProducts = await readAll({ forceRefresh: true });
   const latest = latestProducts.find((p) => p.id === id) ?? current;
 
   const updated: Product = {
@@ -309,7 +309,7 @@ export async function registerProductVideoPath(
   id: string,
   publicPath: string,
 ): Promise<string> {
-  const products = await readAll();
+  const products = await readAll({ forceRefresh: true });
   const index = products.findIndex((p) => p.id === id);
   if (index === -1) throw new Error("Ürün bulunamadı.");
 

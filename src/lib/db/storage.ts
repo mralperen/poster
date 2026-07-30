@@ -84,11 +84,17 @@ async function readLocalBinary(relativePath: string): Promise<Buffer | null> {
   }
 }
 
-async function readBlobBytes(relativePath: string): Promise<Buffer | null> {
+async function readBlobBytes(
+  relativePath: string,
+  options?: { useCache?: boolean },
+): Promise<Buffer | null> {
   try {
     const { get } = await import("@vercel/blob");
     const key = relativePath.replace(/^\//, "");
-    const result = await get(key, { access: "private" });
+    const result = await get(key, {
+      access: "private",
+      useCache: options?.useCache,
+    });
     if (!result || result.statusCode !== 200 || !result.stream) return null;
     return streamToBuffer(result.stream);
   } catch {
@@ -96,8 +102,11 @@ async function readBlobBytes(relativePath: string): Promise<Buffer | null> {
   }
 }
 
-async function readBlobText(relativePath: string): Promise<string | null> {
-  const bytes = await readBlobBytes(relativePath);
+async function readBlobText(
+  relativePath: string,
+  options?: { useCache?: boolean },
+): Promise<string | null> {
+  const bytes = await readBlobBytes(relativePath, options);
   return bytes ? bytes.toString("utf-8") : null;
 }
 
@@ -152,7 +161,9 @@ export async function readTextFile(
 
   if (useBlobStorage()) {
     try {
-      const fromBlob = await readBlobText(normalized);
+      const fromBlob = await readBlobText(normalized, {
+        useCache: !forceRefresh,
+      });
       if (fromBlob !== null) {
         cache.set(normalized, { value: fromBlob, expires: Date.now() + ttl });
         return fromBlob;

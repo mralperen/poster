@@ -33,14 +33,10 @@ function isProductVideoPath(pathname: string, productId: string): boolean {
   if (!clean.startsWith(prefix)) return false;
 
   const filename = clean.slice(prefix.length);
-  return /^video(?:-\d+)?\.(?:mp4|webm)$/i.test(filename);
+  return /^video(?:-[a-zA-Z0-9_-]+)?\.(?:mp4|webm)$/i.test(filename);
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  if (!(await isAdminAuthenticated())) {
-    return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
-  }
-
   const { id } = await context.params;
   const product = await getProductById(id);
   if (!product) {
@@ -54,6 +50,10 @@ export async function POST(request: Request, context: RouteContext) {
       const body = (await request.json()) as Record<string, unknown>;
 
       if (body.type === "register" && typeof body.pathname === "string") {
+        if (!(await isAdminAuthenticated())) {
+          return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
+        }
+
         const extension = extensionFromPathname(body.pathname);
         if (!extension) {
           return NextResponse.json(
@@ -97,6 +97,10 @@ export async function POST(request: Request, context: RouteContext) {
         body: body as unknown as HandleUploadBody,
         request,
         onBeforeGenerateToken: async (pathname) => {
+          if (!(await isAdminAuthenticated())) {
+            throw new Error("Yetkisiz.");
+          }
+
           const clean = pathname.replace(/^\//, "");
           if (!isProductVideoPath(clean, id)) {
             throw new Error("Geçersiz video yolu.");
@@ -108,8 +112,10 @@ export async function POST(request: Request, context: RouteContext) {
           return {
             allowedContentTypes: ["video/mp4", "video/webm"],
             maximumSizeInBytes: MAX_BYTES,
-            addRandomSuffix: false,
-            allowOverwrite: true,
+            // Eski açık admin sekmeleri video.mp4 gönderse bile Blob her
+            // yüklemede benzersiz yol üretsin; CDN overwrite sorunu oluşmasın.
+            addRandomSuffix: true,
+            allowOverwrite: false,
             tokenPayload: JSON.stringify({ productId: id }),
           };
         },
@@ -122,6 +128,10 @@ export async function POST(request: Request, context: RouteContext) {
       });
 
       return NextResponse.json(jsonResponse);
+    }
+
+    if (!(await isAdminAuthenticated())) {
+      return NextResponse.json({ error: "Yetkisiz." }, { status: 401 });
     }
 
     const formData = await request.formData();
