@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PosterScrubber } from "@/components/PosterScrubber";
 import { formatPrice } from "@/lib/format";
 import { isUploadImageSrc, withImageVersion } from "@/lib/image-version";
@@ -12,30 +12,72 @@ type LenticularHeroProps = {
   products: Product[];
 };
 
-const accents = ["#f6c85f", "#79d8ff", "#b8f28b", "#ff8f7a"];
-
 export function LenticularHero({ products }: LenticularHeroProps) {
   const [selectedId, setSelectedId] = useState(products[0]?.id ?? "");
-  const selected = products.find((product) => product.id === selectedId) ?? products[0];
+  const railRef = useRef<HTMLDivElement>(null);
+  const selected =
+    products.find((product) => product.id === selectedId) ?? products[0];
+  const selectedIndex = Math.max(
+    0,
+    products.findIndex((product) => product.id === selected?.id),
+  );
+
+  useEffect(() => {
+    const node = railRef.current?.querySelector<HTMLElement>(
+      `[data-hero-thumb="${selectedId}"]`,
+    );
+    node?.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+  }, [selectedId]);
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (products.length < 2) return;
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+        event.preventDefault();
+        const next = products[(selectedIndex + 1) % products.length];
+        if (next) setSelectedId(next.id);
+      }
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+        event.preventDefault();
+        const prev =
+          products[(selectedIndex - 1 + products.length) % products.length];
+        if (prev) setSelectedId(prev.id);
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [products, selectedIndex]);
 
   if (!selected) return null;
+
   const selectedViews = selected.views.map((src) =>
     withImageVersion(src, selected.updatedAt),
   );
+
+  const selectByOffset = (offset: number) => {
+    const next =
+      products[(selectedIndex + offset + products.length) % products.length];
+    if (next) setSelectedId(next.id);
+  };
 
   return (
     <section className="relative isolate overflow-hidden bg-[#eef2f3] text-zinc-950">
       <div className="lenticular-field absolute inset-0 opacity-70" />
       <div className="lens-sweep absolute inset-y-0 left-0 w-1/3 opacity-60" />
 
-      <div className="relative mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:gap-12 lg:py-12">
+      <div className="relative mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:py-12">
         <div className="max-w-2xl">
           <h1 className="max-w-[14ch] text-5xl font-semibold leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl">
             Tek Çerçeve, Sonsuz Değişim.
           </h1>
 
           <p className="mt-6 max-w-lg text-base leading-7 text-zinc-600 sm:text-lg">
-            Durağan posterleri unut. Tek bir çerçevede birden fazla sahneyi canlı geçişini gör.
+            Durağan posterleri unut. Tek bir çerçevede birden fazla sahneyi canlı
+            geçişini gör.
           </p>
 
           <div className="mt-8 hidden flex-wrap items-center gap-3 lg:flex">
@@ -56,7 +98,8 @@ export function LenticularHero({ products }: LenticularHeroProps) {
 
         <div className="relative">
           <div className="absolute -inset-x-4 top-8 h-24 border-y border-zinc-950/10 opacity-70" />
-          <div className="relative grid gap-4 lg:grid-cols-[minmax(0,1fr)_104px] lg:items-start">
+
+          <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_7.5rem] lg:items-stretch lg:gap-6">
             <div className="poster-wood-frame relative min-w-0">
               <div className="poster-wood-frame__mat">
                 <PosterScrubber
@@ -71,45 +114,99 @@ export function LenticularHero({ products }: LenticularHeroProps) {
               </div>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] lg:w-[104px] lg:shrink-0 lg:flex-col lg:gap-2.5 lg:overflow-visible [&::-webkit-scrollbar]:hidden">
-              {products.map((product, index) => {
-                const active = product.id === selected.id;
-                return (
+            {products.length > 1 ? (
+              <aside className="hero-gallery-rail flex min-h-0 flex-col lg:h-full">
+                <div className="mb-3 hidden items-center justify-between lg:flex">
+                  <p className="text-[11px] font-semibold tracking-[0.22em] text-zinc-500 uppercase">
+                    Seç
+                  </p>
+                  <p className="font-mono text-[11px] tabular-nums text-zinc-500">
+                    {String(selectedIndex + 1).padStart(2, "0")}
+                    <span className="text-zinc-400"> / </span>
+                    {String(products.length).padStart(2, "0")}
+                  </p>
+                </div>
+
+                <div className="mb-2 hidden gap-1.5 lg:flex">
                   <button
-                    key={product.id}
                     type="button"
-                    onClick={() => setSelectedId(product.id)}
-                    className={`group relative aspect-[3/4] w-[22%] shrink-0 overflow-hidden rounded-[8px] border border-zinc-950/15 text-left transition-[opacity,box-shadow] lg:w-full ${
-                      active
-                        ? "z-10 border-zinc-950 opacity-100 shadow-[0_0_0_2px_#09090a]"
-                        : "opacity-60 hover:opacity-100"
-                    }`}
-                    aria-label={`${product.name} ürününü göster`}
-                    aria-current={active ? "true" : undefined}
+                    onClick={() => selectByOffset(-1)}
+                    className="flex h-8 flex-1 items-center justify-center rounded-[6px] border border-zinc-950/12 bg-white/50 text-zinc-700 transition-colors hover:border-zinc-950/25 hover:bg-white"
+                    aria-label="Önceki poster"
                   >
-                    <Image
-                      src={withImageVersion(product.thumbnail, product.updatedAt)}
-                      alt=""
-                      fill
-                      aria-hidden
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      sizes="104px"
-                      unoptimized={isUploadImageSrc(product.thumbnail)}
-                    />
-                    <span
-                      className="absolute inset-x-0 bottom-0 h-1"
-                      style={{ backgroundColor: accents[index % accents.length] }}
-                    />
+                    <Chevron direction="up" />
                   </button>
-                );
-              })}
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => selectByOffset(1)}
+                    className="flex h-8 flex-1 items-center justify-center rounded-[6px] border border-zinc-950/12 bg-white/50 text-zinc-700 transition-colors hover:border-zinc-950/25 hover:bg-white"
+                    aria-label="Sonraki poster"
+                  >
+                    <Chevron direction="down" />
+                  </button>
+                </div>
+
+                <div
+                  ref={railRef}
+                  className="hero-gallery-rail__track flex gap-2.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:overflow-x-hidden lg:pb-0 [&::-webkit-scrollbar]:hidden"
+                >
+                  {products.map((product, index) => {
+                    const active = product.id === selected.id;
+                    return (
+                      <button
+                        key={product.id}
+                        type="button"
+                        data-hero-thumb={product.id}
+                        onClick={() => setSelectedId(product.id)}
+                        className={`hero-gallery-thumb group relative aspect-[3/4] w-[4.75rem] shrink-0 overflow-hidden rounded-[7px] text-left transition-[transform,opacity,box-shadow] duration-300 sm:w-[5.25rem] lg:w-full ${
+                          active
+                            ? "z-10 opacity-100 shadow-[0_10px_28px_rgba(9,9,10,0.18)] ring-2 ring-zinc-950 ring-offset-2 ring-offset-[#eef2f3] lg:scale-[1.02]"
+                            : "opacity-45 hover:opacity-90"
+                        }`}
+                        aria-label={`${product.name} ürününü göster`}
+                        aria-current={active ? "true" : undefined}
+                      >
+                        <Image
+                          src={withImageVersion(
+                            product.thumbnail,
+                            product.updatedAt,
+                          )}
+                          alt=""
+                          fill
+                          aria-hidden
+                          className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                          sizes="96px"
+                          unoptimized={isUploadImageSrc(product.thumbnail)}
+                        />
+                        <span
+                          className={`absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent transition-opacity ${
+                            active ? "opacity-100" : "opacity-70"
+                          }`}
+                        />
+                        <span
+                          className={`absolute bottom-1.5 left-1.5 font-mono text-[10px] font-semibold tracking-wide ${
+                            active ? "text-white" : "text-white/80"
+                          }`}
+                        >
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </aside>
+            ) : null}
           </div>
 
-          <div className="mt-5 flex items-center justify-between gap-4 border-t border-zinc-950/12 pt-4">
-            <h2 className="min-w-0 truncate text-lg font-semibold text-zinc-950 sm:text-xl">
-              {selected.name}
-            </h2>
+          <div className="mt-5 flex items-end justify-between gap-4 border-t border-zinc-950/12 pt-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium tracking-[0.18em] text-zinc-500 uppercase">
+                Vitrin
+              </p>
+              <h2 className="mt-1 truncate text-lg font-semibold text-zinc-950 sm:text-xl">
+                {selected.name}
+              </h2>
+            </div>
             <p className="shrink-0 text-xl font-bold tabular-nums text-zinc-950 sm:text-2xl">
               {formatPrice(selected.basePrice)}
             </p>
@@ -132,5 +229,19 @@ export function LenticularHero({ products }: LenticularHeroProps) {
         </div>
       </div>
     </section>
+  );
+}
+
+function Chevron({ direction }: { direction: "up" | "down" }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d={direction === "up" ? "M6 14l6-6 6 6" : "M6 10l6 6 6-6"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }

@@ -18,7 +18,10 @@ export default async function Home() {
     listPublishedReviews(),
   ]);
 
-  const showcaseProducts = featured.length > 0 ? featured : products.slice(0, 3);
+  // Hero vitrinde çok ürün şeridi bozar; en fazla 5 öne çıkan göster.
+  const showcaseProducts = (
+    featured.length > 0 ? featured : products.slice(0, 5)
+  ).slice(0, 5);
   const homepageReviews = buildHomepageReviews({
     reviews: publishedReviews,
     products,
