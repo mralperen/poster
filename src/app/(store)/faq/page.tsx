@@ -15,7 +15,7 @@ export default async function FaqPage() {
   const { faq } = await getSiteContent();
 
   return (
-    <InfoPage eyebrow={faq.eyebrow} title={faq.title} description={faq.description}>
+    <InfoPage eyebrow={faq.eyebrow}>
       <div className="divide-y divide-white/10 rounded-[8px] border border-white/10 bg-white/[0.025]">
         {faq.items.map((item) => (
           <details key={item.question} className="group p-5">

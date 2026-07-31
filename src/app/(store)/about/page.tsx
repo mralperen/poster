@@ -15,11 +15,7 @@ export default async function AboutPage() {
   const { about } = await getSiteContent();
 
   return (
-    <InfoPage
-      eyebrow={about.eyebrow}
-      title={about.title}
-      description={about.description}
-    >
+    <InfoPage eyebrow={about.eyebrow}>
       <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-5 text-sm leading-7 text-zinc-400">
           {about.paragraphs.map((paragraph) => (

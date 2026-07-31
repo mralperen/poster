@@ -15,11 +15,7 @@ export default async function ShippingPage() {
   const { shipping } = await getSiteContent();
 
   return (
-    <InfoPage
-      eyebrow={shipping.eyebrow}
-      title={shipping.title}
-      description={shipping.description}
-    >
+    <InfoPage eyebrow={shipping.eyebrow}>
       <InfoGrid items={shipping.items} />
     </InfoPage>
   );
