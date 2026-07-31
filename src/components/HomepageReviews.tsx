@@ -132,7 +132,11 @@ export function HomepageReviews({
             </Link>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+          <div
+            className={`grid gap-3 sm:gap-4 ${
+              reviews.length > 1 ? "sm:grid-cols-2" : ""
+            }`}
+          >
             {reviews.map((review) =>
               review.productSlug ? (
                 <Link

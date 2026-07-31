@@ -105,6 +105,23 @@ export function buildHomepageReviews(input: {
     .map((review) => toProductCard(review, productsById))
     .filter((card): card is HomepageReviewCard => card !== null);
 
+  // Ürün başına bir yorum seçmek az ürünlü mağazada bölümü yarım bırakıyor;
+  // kontenjan dolmadıysa kalan yorumlarla tamamla.
+  if (cards.length < limit) {
+    const used = new Set(cards.map((card) => card.id));
+
+    for (const review of input.reviews) {
+      if (cards.length >= limit) break;
+      if (!review.published || used.has(review.id)) continue;
+
+      const card = toProductCard(review, productsById);
+      if (!card) continue;
+
+      used.add(card.id);
+      cards.push(card);
+    }
+  }
+
   return cards.slice(0, limit);
 }
 
