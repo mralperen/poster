@@ -7,10 +7,20 @@ export type HomepageReviewCard = {
   rating: number;
   body: string;
   meta: string;
+  images?: string[];
   productSlug?: string;
   productName?: string;
   productThumbnail?: string;
   productUpdatedAt?: string;
+};
+
+/** "Duvarda nasıl görünüyor?" galerisi için müşteri karesi. */
+export type CustomerPhoto = {
+  id: string;
+  src: string;
+  authorName: string;
+  productSlug?: string;
+  productName?: string;
 };
 
 function dailySeed(): number {
@@ -74,6 +84,7 @@ function toProductCard(
     rating: review.rating,
     body: review.body,
     meta: product.name,
+    ...(review.images?.length ? { images: review.images } : {}),
     productSlug: product.slug,
     productName: product.name,
     productThumbnail: product.thumbnail,
@@ -95,4 +106,39 @@ export function buildHomepageReviews(input: {
     .filter((card): card is HomepageReviewCard => card !== null);
 
   return cards.slice(0, limit);
+}
+
+/**
+ * Yayınlanmış yorumlardaki müşteri fotoğraflarını en yeniden başlayarak toplar.
+ * Henüz fotoğraflı yorum yoksa boş döner — galeri bölümü kendini gizler.
+ */
+export function buildCustomerPhotos(input: {
+  reviews: ProductReview[];
+  products: Product[];
+  limit?: number;
+}): CustomerPhoto[] {
+  const limit = input.limit ?? 8;
+  const productsById = new Map(input.products.map((product) => [product.id, product]));
+  const photos: CustomerPhoto[] = [];
+
+  for (const review of input.reviews) {
+    if (!review.published || !review.images?.length) continue;
+
+    const product = productsById.get(review.productId);
+    if (product && !product.published) continue;
+
+    for (const src of review.images) {
+      photos.push({
+        id: `${review.id}-${src}`,
+        src,
+        authorName: review.authorName,
+        productSlug: product?.slug,
+        productName: product?.name,
+      });
+
+      if (photos.length >= limit) return photos;
+    }
+  }
+
+  return photos;
 }

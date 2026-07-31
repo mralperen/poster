@@ -1,20 +1,19 @@
 import Link from "next/link";
+import { CustomerWall } from "@/components/CustomerWall";
 import { HomepageReviews } from "@/components/HomepageReviews";
 import { LenticularHero } from "@/components/LenticularHero";
 import { ProductCard } from "@/components/ProductCard";
 import { TrustStrip } from "@/components/TrustStrip";
-import { listPublishedReviews } from "@/lib/db/reviews-store";
-import { buildHomepageReviews } from "@/lib/homepage-reviews";
+import { averageRating, listPublishedReviews } from "@/lib/db/reviews-store";
+import { buildCustomerPhotos, buildHomepageReviews } from "@/lib/homepage-reviews";
 import { getFeaturedProducts, getPublishedProducts } from "@/lib/products";
-import { getSiteContent } from "@/lib/site-content";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [featured, products, content, publishedReviews] = await Promise.all([
+  const [featured, products, publishedReviews] = await Promise.all([
     getFeaturedProducts(),
     getPublishedProducts(),
-    getSiteContent(),
     listPublishedReviews(),
   ]);
 
@@ -25,7 +24,12 @@ export default async function Home() {
   const homepageReviews = buildHomepageReviews({
     reviews: publishedReviews,
     products,
-    limit: 6,
+    limit: 4,
+  });
+  const customerPhotos = buildCustomerPhotos({
+    reviews: publishedReviews,
+    products,
+    limit: 8,
   });
 
   return (
@@ -51,42 +55,21 @@ export default async function Home() {
             </Link>
           </div>
 
+          {/* 5. kart 4'lü ızgarada tek başına alta düşüyor; ızgarada 4 göster. */}
           <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
-            {showcaseProducts.map((product) => (
+            {showcaseProducts.slice(0, 4).map((product) => (
               <ProductCard key={product.id} product={product} animatedPreview />
             ))}
           </div>
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#0b0b0c] px-4 py-14 sm:px-6">
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div>
-            <p className="text-xs font-medium tracking-[0.22em] text-amber-300 uppercase">
-              Lentiküler deneyim
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight sm:text-3xl">
-              {content.home.storyTitle}
-            </h2>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {content.home.guideItems.map((item, index) => (
-              <article
-                key={item.title}
-                className="rounded-[8px] border border-white/10 bg-white/[0.025] px-4 py-5"
-              >
-                <span className="text-xs font-semibold text-amber-300/90">
-                  0{index + 1}
-                </span>
-                <h3 className="mt-2 text-sm font-semibold text-white">{item.title}</h3>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <HomepageReviews reviews={homepageReviews} />
+      <HomepageReviews
+        reviews={homepageReviews}
+        average={averageRating(publishedReviews)}
+        totalCount={publishedReviews.length}
+      />
+      <CustomerWall photos={customerPhotos} />
       <TrustStrip />
     </main>
   );
