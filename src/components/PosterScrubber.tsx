@@ -21,6 +21,8 @@ type PosterScrubberProps = {
   initialProgress?: number;
   priority?: boolean;
   woodFrame?: boolean;
+  /** Görünür olunca açı geçişini kendi kendine oynatır (hero'daki "aha" anı). */
+  autoDemo?: boolean;
 };
 
 type DragState = {
@@ -33,6 +35,34 @@ type DragState = {
 const clamp = (value: number) => Math.max(0, Math.min(1, value));
 const DRAG_SENSITIVITY = 1.12;
 
+/** Duvarın önünden yürüyormuş gibi: ortada dur, sola sap, sağa geç, ortaya dön. */
+const DEMO_KEYFRAMES = [
+  { at: 0, value: 0.5 },
+  { at: 0.14, value: 0.5 },
+  { at: 0.42, value: 0.03 },
+  { at: 0.76, value: 0.97 },
+  { at: 1, value: 0.5 },
+] as const;
+const DEMO_CYCLE_MS = 4200;
+const DEMO_CYCLES = 2;
+
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+}
+
+function demoProgressAt(cycleRatio: number): number {
+  for (let i = 1; i < DEMO_KEYFRAMES.length; i += 1) {
+    const from = DEMO_KEYFRAMES[i - 1];
+    const to = DEMO_KEYFRAMES[i];
+    if (cycleRatio > to.at) continue;
+
+    const span = to.at - from.at;
+    const local = span <= 0 ? 1 : (cycleRatio - from.at) / span;
+    return from.value + (to.value - from.value) * easeInOut(local);
+  }
+  return 0.5;
+}
+
 export function PosterScrubber({
   views,
   viewLabels = [],
@@ -41,8 +71,10 @@ export function PosterScrubber({
   initialProgress = 0.5,
   priority = false,
   woodFrame = false,
+  autoDemo = false,
 }: PosterScrubberProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasInteractedRef = useRef(false);
   const isDraggingRef = useRef(false);
   const pointerIdRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -58,6 +90,13 @@ export function PosterScrubber({
   const [progress, setProgress] = useState(initialProgress);
   const [isDragging, setIsDragging] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isDemoing, setIsDemoing] = useState(false);
+  const [demoFinished, setDemoFinished] = useState(!autoDemo);
+
+  const markInteracted = useCallback(() => {
+    hasInteractedRef.current = true;
+    setHasInteracted(true);
+  }, []);
 
   const viewCount = views.length;
   const labels =
@@ -107,17 +146,20 @@ export function PosterScrubber({
     [updateProgress],
   );
 
-  const beginDrag = useCallback((clientX: number, clientY: number) => {
-    setHasInteracted(true);
-    isDraggingRef.current = true;
-    setIsDragging(true);
-    dragStart.current = {
-      x: clientX,
-      y: clientY,
-      progress: progressRef.current,
-      axis: "pending",
-    };
-  }, []);
+  const beginDrag = useCallback(
+    (clientX: number, clientY: number) => {
+      markInteracted();
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      dragStart.current = {
+        x: clientX,
+        y: clientY,
+        progress: progressRef.current,
+        axis: "pending",
+      };
+    },
+    [markInteracted],
+  );
 
   const finishDrag = useCallback(() => {
     isDraggingRef.current = false;
@@ -174,12 +216,12 @@ export function PosterScrubber({
     const step = viewCount === 3 ? 0.08 : 0.05;
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      setHasInteracted(true);
+      markInteracted();
       updateProgress(progressRef.current - step);
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      setHasInteracted(true);
+      markInteracted();
       updateProgress(progressRef.current + step);
     }
   };
@@ -214,6 +256,73 @@ export function PosterScrubber({
     };
   }, []);
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!autoDemo || !container) return;
+
+    let frame: number | null = null;
+    let startedAt = 0;
+    let lastPaint = 0;
+    let cancelled = false;
+
+    const stop = () => {
+      setIsDemoing(false);
+      setDemoFinished(true);
+    };
+
+    const step = (now: number) => {
+      if (cancelled) return;
+      if (hasInteractedRef.current) {
+        stop();
+        return;
+      }
+
+      if (!startedAt) startedAt = now;
+      const elapsed = now - startedAt;
+
+      if (elapsed >= DEMO_CYCLE_MS * DEMO_CYCLES) {
+        updateProgress(0.5);
+        stop();
+        return;
+      }
+
+      // Her karede state güncellemek sayfa açılışında gereksiz yük; ~35fps yeter.
+      if (now - lastPaint >= 26) {
+        lastPaint = now;
+        updateProgress(demoProgressAt((elapsed % DEMO_CYCLE_MS) / DEMO_CYCLE_MS));
+      }
+
+      frame = window.requestAnimationFrame(step);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        observer.disconnect();
+
+        const reduceMotion = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (reduceMotion || hasInteractedRef.current) {
+          stop();
+          return;
+        }
+
+        setIsDemoing(true);
+        frame = window.requestAnimationFrame(step);
+      },
+      { threshold: 0.3 },
+    );
+
+    observer.observe(container);
+
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+      if (frame !== null) window.cancelAnimationFrame(frame);
+    };
+  }, [autoDemo, updateProgress]);
+
   const weights = getViewWeights(progress, viewCount);
   const currentLabel = getViewLabel(progress, viewCount, labels);
   const activeViewIndex = weights.reduce(
@@ -221,10 +330,11 @@ export function PosterScrubber({
     0,
   );
   const initialViewIndex = Math.round(clamp(initialProgress) * Math.max(viewCount - 1, 0));
+  const animating = isDragging || isDemoing;
   const rotateY = (progress - 0.5) * 26;
-  const rotateX = isDragging ? (0.5 - progress) * 3 : 0;
+  const rotateX = animating ? (0.5 - progress) * 3 : 0;
   const shineX = 12 + progress * 76;
-  const showSwipeCoach = !hasInteracted && !isDragging;
+  const showSwipeCoach = demoFinished && !hasInteracted && !isDragging;
 
   const scrubberStyle = {
     "--scrub-progress": progress,
@@ -261,14 +371,14 @@ export function PosterScrubber({
       >
         <div
           className={`absolute inset-0 [contain:layout_paint_style] ${
-            isDragging ? "will-change-transform" : ""
+            animating ? "will-change-transform" : ""
           }`}
           style={{
             transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${
-              isDragging ? 1.018 : 1
+              animating ? 1.018 : 1
             })`,
             transformStyle: "preserve-3d",
-            transition: isDragging ? "none" : "transform 180ms ease-out",
+            transition: animating ? "none" : "transform 180ms ease-out",
           }}
         >
           {views.map((src, index) => (
@@ -285,7 +395,7 @@ export function PosterScrubber({
               unoptimized={isUploadImageSrc(src)}
               style={{
                 opacity: weights[index],
-                transition: isDragging ? "none" : "opacity 140ms linear",
+                transition: animating ? "none" : "opacity 140ms linear",
               }}
             />
           ))}

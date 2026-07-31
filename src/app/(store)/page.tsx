@@ -42,9 +42,13 @@ export default async function Home() {
 
   return (
     <main className="bg-[#09090a] text-white">
-      <LenticularHero products={showcaseProducts} />
+      <LenticularHero
+        products={showcaseProducts}
+        rating={reviewSummary.average}
+        ratingCount={reviewSummary.count}
+      />
 
-      <section className="px-4 py-14 sm:px-6 sm:py-20">
+      <section className="border-t border-white/[0.06] px-4 py-14 sm:px-6 sm:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col gap-4 border-b border-white/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
             <div>
