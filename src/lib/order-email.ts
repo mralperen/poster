@@ -7,6 +7,7 @@ import type { StoredOrder } from "@/lib/db/orders-store";
 import {
   renderAdminOrderNotificationEmail,
   renderCustomerOrderConfirmationEmail,
+  renderCustomerOrderShippedEmail,
 } from "@/lib/email-templates";
 import {
   getResendFromEmail,
@@ -72,6 +73,29 @@ export async function sendAdminOrderNotificationEmail(
     type: "admin_order_notification",
     order,
     to: getAdminNotifyEmail(),
+    subject: template.subject,
+    html: template.html,
+  });
+}
+
+export async function sendOrderShippedEmail(
+  order: StoredOrder,
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  if (!isOrderEmailConfigured()) {
+    return { ok: false, reason: "RESEND_API_KEY tanımlı değil." };
+  }
+
+  const alreadySent = await hasSuccessfulOrderEmail(order.id, "order_shipped");
+  if (alreadySent) {
+    return { ok: true };
+  }
+
+  const template = renderCustomerOrderShippedEmail(order);
+
+  return sendAndLog({
+    type: "order_shipped",
+    order,
+    to: order.customer.email,
     subject: template.subject,
     html: template.html,
   });

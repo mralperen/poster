@@ -173,6 +173,57 @@ export function renderCustomerOrderConfirmationEmail(order: StoredOrder): {
   };
 }
 
+export function renderCustomerOrderShippedEmail(order: StoredOrder): {
+  subject: string;
+  html: string;
+} {
+  const ref = orderRef(order.id);
+  const trackingBlock = order.trackingNumber
+    ? `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;background:#18181b;border:1px solid #27272a;border-radius:10px;">
+      <tr>
+        <td style="padding:16px 18px;">
+          <p style="margin:0 0 8px;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.14em;">Kargo takip no</p>
+          <p style="margin:0;font-size:18px;font-weight:700;color:#fbbf24;font-family:monospace;">${escapeHtml(order.trackingNumber)}</p>
+        </td>
+      </tr>
+    </table>`
+    : "";
+
+  const bodyHtml = `
+    <p style="margin:0 0 12px;font-size:15px;line-height:1.7;color:#e4e4e7;">
+      Merhaba <strong style="color:#fff;">${escapeHtml(order.customer.name)}</strong>,
+    </p>
+    <p style="margin:0 0 20px;font-size:15px;line-height:1.7;color:#a1a1aa;">
+      <strong style="color:#fbbf24;">#${ref}</strong> numaralı siparişiniz kargoya verildi.
+      ${order.trackingNumber ? "Takip numaranız aşağıdadır." : "Kargo firmasından kısa süre içinde bilgilendirme alabilirsiniz."}
+    </p>
+    ${trackingBlock}
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 20px;">
+      ${buildItemsRows(order)}
+    </table>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#18181b;border:1px solid #27272a;border-radius:10px;">
+      <tr>
+        <td style="padding:16px 18px;">
+          <p style="margin:0 0 8px;font-size:11px;color:#71717a;text-transform:uppercase;letter-spacing:0.14em;">Teslimat adresi</p>
+          <p style="margin:0;font-size:14px;line-height:1.7;color:#e4e4e7;">
+            ${escapeHtml(order.customer.address)}<br />
+            ${escapeHtml(order.customer.city)}${order.customer.zip ? ` ${escapeHtml(order.customer.zip)}` : ""}
+          </p>
+        </td>
+      </tr>
+    </table>`;
+
+  return {
+    subject: `Siparişiniz kargoya verildi — #${ref}`,
+    html: wrapEmailLayout({
+      title: `Kargo bildirimi #${ref}`,
+      preheader: `${brand.name} siparişiniz yola çıktı.`,
+      bodyHtml,
+    }),
+  };
+}
+
 export function renderAdminOrderNotificationEmail(order: StoredOrder): {
   subject: string;
   html: string;

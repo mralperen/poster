@@ -35,6 +35,8 @@ export type StoredOrder = {
   paymentProvider: "paytr";
   paytrMerchantOid: string;
   paytrPaidAmount?: number;
+  shippedAt?: string;
+  trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -229,6 +231,44 @@ export async function updateOrderStatus(
   }
 
   return undefined;
+}
+
+export async function markOrderShipped(
+  id: string,
+  input: { trackingNumber?: string } = {},
+): Promise<
+  { ok: true; order: StoredOrder } | { ok: false; reason: string }
+> {
+  const orders = await readOrders();
+  const index = orders.findIndex((order) => order.id === id);
+  if (index === -1) {
+    return { ok: false, reason: "Sipariş bulunamadı." };
+  }
+
+  const current = orders[index];
+  if (current.status !== "paid" && current.status !== "fulfilled") {
+    return { ok: false, reason: "Yalnızca ödenmiş siparişler kargoya verilebilir." };
+  }
+
+  const trackingNumber = input.trackingNumber?.trim() || undefined;
+  const now = new Date().toISOString();
+  const updated: StoredOrder = {
+    ...current,
+    status: "fulfilled",
+    shippedAt: current.shippedAt ?? now,
+    trackingNumber: trackingNumber ?? current.trackingNumber,
+    updatedAt: now,
+  };
+
+  orders[index] = updated;
+  await writeOrders(orders);
+
+  const verified = await getOrderById(id, { maxAttempts: 4, retryDelayMs: 250 });
+  if (!verified || verified.status !== "fulfilled") {
+    return { ok: false, reason: "Sipariş durumu güncellenemedi." };
+  }
+
+  return { ok: true, order: verified };
 }
 
 export async function reconcileOrderWithPaytrCallbacks(

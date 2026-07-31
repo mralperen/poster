@@ -60,6 +60,10 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
   const [clearing, setClearing] = useState(false);
   const [clearMessage, setClearMessage] = useState("");
   const [clearError, setClearError] = useState("");
+  const [shippingOrderId, setShippingOrderId] = useState<string | null>(null);
+  const [trackingNumbers, setTrackingNumbers] = useState<Record<string, string>>({});
+  const [shipMessage, setShipMessage] = useState("");
+  const [shipError, setShipError] = useState("");
 
   const counts = useMemo(
     () => ({
@@ -71,16 +75,6 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
   );
 
   const visibleOrders = orders.filter((order) => matchesFilter(order, filter));
-
-  useEffect(() => {
-    if (counts.pending === 0) return;
-
-    const timer = window.setInterval(() => {
-      router.refresh();
-    }, 8000);
-
-    return () => window.clearInterval(timer);
-  }, [counts.pending, router]);
 
   const clearSales = async () => {
     const confirmed = window.confirm(
@@ -106,6 +100,56 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
       setClearError(err instanceof Error ? err.message : "Bir hata oluştu.");
     } finally {
       setClearing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (counts.pending === 0) return;
+
+    const timer = window.setInterval(() => {
+      router.refresh();
+    }, 8000);
+
+    return () => window.clearInterval(timer);
+  }, [counts.pending, router]);
+
+  const shipOrder = async (orderId: string) => {
+    setShippingOrderId(orderId);
+    setShipMessage("");
+    setShipError("");
+
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}/ship`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trackingNumber: trackingNumbers[orderId]?.trim() || undefined,
+        }),
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        emailSent?: boolean;
+        emailError?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Kargo bildirimi gönderilemedi.");
+      }
+
+      if (data.emailSent === false) {
+        setShipError(
+          data.emailError ??
+            "Sipariş kargolandı olarak işaretlendi ancak e-posta gönderilemedi.",
+        );
+      } else {
+        setShipMessage("Müşteriye kargo bildirimi e-postası gönderildi.");
+      }
+
+      router.refresh();
+    } catch (err) {
+      setShipError(err instanceof Error ? err.message : "Bir hata oluştu.");
+    } finally {
+      setShippingOrderId(null);
     }
   };
 
@@ -145,6 +189,16 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
       {clearError ? (
         <p className="mt-4 rounded-[8px] border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
           {clearError}
+        </p>
+      ) : null}
+      {shipMessage ? (
+        <p className="mt-4 rounded-[8px] border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          {shipMessage}
+        </p>
+      ) : null}
+      {shipError ? (
+        <p className="mt-4 rounded-[8px] border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          {shipError}
         </p>
       ) : null}
 
@@ -235,6 +289,59 @@ export function AdminOrdersList({ orders }: AdminOrdersListProps) {
                   </ul>
                 </div>
               </details>
+
+              {order.status === "paid" ? (
+                <div className="mt-4 border-t border-white/8 pt-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    Kargoya ver
+                  </p>
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <label className="flex-1">
+                      <span className="mb-1.5 block text-xs text-zinc-500">
+                        Takip numarası (isteğe bağlı)
+                      </span>
+                      <input
+                        type="text"
+                        value={trackingNumbers[order.id] ?? ""}
+                        onChange={(event) =>
+                          setTrackingNumbers((current) => ({
+                            ...current,
+                            [order.id]: event.target.value,
+                          }))
+                        }
+                        placeholder="Örn. 1234567890"
+                        className="w-full rounded-lg border border-white/10 bg-black/20 px-3 py-2 text-sm text-white placeholder:text-zinc-600"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => void shipOrder(order.id)}
+                      disabled={shippingOrderId === order.id}
+                      className="rounded-lg bg-sky-400/15 px-4 py-2 text-sm font-medium text-sky-100 ring-1 ring-sky-300/25 transition-colors hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {shippingOrderId === order.id
+                        ? "Gönderiliyor…"
+                        : "Kargoya ver ve müşteriye bildir"}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {order.status === "fulfilled" ? (
+                <div className="mt-4 border-t border-white/8 pt-4 text-sm text-zinc-400">
+                  <p>
+                    Kargoya verildi
+                    {order.shippedAt
+                      ? ` · ${formatOrderDate(order.shippedAt)}`
+                      : ""}
+                  </p>
+                  {order.trackingNumber ? (
+                    <p className="mt-1 font-mono text-sky-200">
+                      Takip no: {order.trackingNumber}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </article>
           ))
         )}

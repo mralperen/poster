@@ -7,6 +7,7 @@ import type { InboxEmail } from "@/lib/db/inbox-store";
 
 const sentTypeLabels: Record<EmailLogType, string> = {
   order_confirmation: "Müşteri onayı",
+  order_shipped: "Kargo bildirimi",
   admin_order_notification: "Admin bildirimi",
   support: "Destek",
 };
@@ -319,6 +320,7 @@ export function AdminMailPanel({
               { key: "all" as const, label: "Tümü" },
               { key: "support" as const, label: "Destek" },
               { key: "order_confirmation" as const, label: "Müşteri" },
+              { key: "order_shipped" as const, label: "Kargo" },
               { key: "admin_order_notification" as const, label: "Admin" },
             ] as const
           ).map((item) => (

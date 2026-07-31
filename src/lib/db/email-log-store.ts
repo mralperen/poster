@@ -3,6 +3,7 @@ import { readTextFile, writeTextFile } from "@/lib/db/storage";
 
 export type EmailLogType =
   | "order_confirmation"
+  | "order_shipped"
   | "admin_order_notification"
   | "support";
 
