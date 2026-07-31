@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -47,7 +48,14 @@ type CartContextValue = {
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "theposterist-cart-v2";
+export const CART_STORAGE_KEY = "theposterist-cart-v2";
+const LEGACY_CART_STORAGE_KEY = "theposterist-cart";
+
+export function clearPersistedCart(): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CART_STORAGE_KEY, "[]");
+  localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+}
 
 function normalizeCartItems(value: unknown): CartItem[] {
   if (!Array.isArray(value)) return [];
@@ -101,23 +109,24 @@ export function CartProvider({
   const [hydrated, setHydrated] = useState(false);
   const pricingConfig = useMemo(() => normalizePricingConfig(pricing), [pricing]);
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const stored =
-          localStorage.getItem(STORAGE_KEY) ??
-          localStorage.getItem("theposterist-cart");
-        if (stored) setItems(normalizeCartItems(JSON.parse(stored)));
-      } catch {
-        /* ignore */
-      }
-      setHydrated(true);
-    });
+  useLayoutEffect(() => {
+    try {
+      const stored =
+        localStorage.getItem(CART_STORAGE_KEY) ??
+        localStorage.getItem(LEGACY_CART_STORAGE_KEY);
+      if (stored) setItems(normalizeCartItems(JSON.parse(stored)));
+    } catch {
+      /* ignore */
+    }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    if (items.length === 0) {
+      localStorage.removeItem(LEGACY_CART_STORAGE_KEY);
+    }
   }, [items, hydrated]);
 
   const addItem = useCallback(
@@ -187,7 +196,10 @@ export function CartProvider({
     [removeItem],
   );
 
-  const clearCart = useCallback(() => setItems([]), []);
+  const clearCart = useCallback(() => {
+    clearPersistedCart();
+    setItems([]);
+  }, []);
 
   const value = useMemo(() => {
     const totals = getCartPricing(items, pricingConfig);

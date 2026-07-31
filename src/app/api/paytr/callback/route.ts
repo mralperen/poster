@@ -81,6 +81,7 @@ export async function POST(request: Request) {
   }
 
   if (order.status === "paid" || order.status === "fulfilled") {
+    void handleOrderPaid(order);
     return new NextResponse("OK", { status: 200 });
   }
 

@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { clearPaySession } from "@/components/CheckoutPayView";
 import { useCart } from "@/context/CartContext";
 
 export function ClearCartOnSuccess({ orderId }: { orderId?: string }) {
   const { clearCart } = useCart();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     clearCart();
     if (orderId) {
       clearPaySession(orderId);

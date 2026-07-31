@@ -57,6 +57,8 @@ export function AdminMailPanel({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendSuccess, setSendSuccess] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillMessage, setBackfillMessage] = useState<string | null>(null);
 
   const unreadCount = inboxEmails.filter((email) => !email.read).length;
 
@@ -128,6 +130,38 @@ export function AdminMailPanel({
     setSendSuccess(false);
   };
 
+  const handleBackfillOrders = async () => {
+    setBackfilling(true);
+    setBackfillMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/emails/backfill-orders", {
+        method: "POST",
+      });
+      const data = (await response.json()) as {
+        error?: string;
+        message?: string;
+        sent?: number;
+        failed?: number;
+      };
+
+      if (!response.ok) {
+        setBackfillMessage(data.error || "Eksik sipariş e-postaları gönderilemedi.");
+        return;
+      }
+
+      setBackfillMessage(data.message || "İşlem tamamlandı.");
+      if ((data.sent ?? 0) > 0) {
+        setTab("sent");
+        router.refresh();
+      }
+    } catch {
+      setBackfillMessage("Bağlantı hatası. Tekrar deneyin.");
+    } finally {
+      setBackfilling(false);
+    }
+  };
+
   const handleSend = async () => {
     setSending(true);
     setSendError(null);
@@ -184,19 +218,35 @@ export function AdminMailPanel({
             Gelen mesajlar ve gönderilen sipariş bildirimleri.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={startCompose}
-          disabled={!configured}
-          className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-medium text-amber-100 transition-colors hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          + Yeni destek e-postası
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void handleBackfillOrders()}
+            disabled={!configured || backfilling}
+            className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {backfilling ? "Gönderiliyor…" : "Eksik sipariş onaylarını gönder"}
+          </button>
+          <button
+            type="button"
+            onClick={startCompose}
+            disabled={!configured}
+            className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-sm font-medium text-amber-100 transition-colors hover:bg-amber-300/20 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            + Yeni destek e-postası
+          </button>
+        </div>
       </div>
 
       {!configured && (
         <div className="mt-5 rounded-[8px] border border-amber-200/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">
           RESEND_API_KEY tanımlı değil. Ödeme ayarlarından yapılandırın.
+        </div>
+      )}
+
+      {backfillMessage && (
+        <div className="mt-5 rounded-[8px] border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-300">
+          {backfillMessage}
         </div>
       )}
 

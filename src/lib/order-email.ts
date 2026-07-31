@@ -1,4 +1,8 @@
-import { recordEmailLog, type EmailLogType } from "@/lib/db/email-log-store";
+import {
+  hasSuccessfulOrderEmail,
+  recordEmailLog,
+  type EmailLogType,
+} from "@/lib/db/email-log-store";
 import type { StoredOrder } from "@/lib/db/orders-store";
 import {
   renderAdminOrderNotificationEmail,
@@ -74,18 +78,32 @@ export async function sendAdminOrderNotificationEmail(
 }
 
 export async function sendOrderPaidEmails(order: StoredOrder): Promise<void> {
-  if (!isOrderEmailConfigured()) return;
+  if (!isOrderEmailConfigured()) {
+    console.error("Sipariş e-postası gönderilemedi: RESEND_API_KEY tanımlı değil.");
+    return;
+  }
 
-  const [customerResult, adminResult] = await Promise.all([
-    sendOrderConfirmationEmail(order),
-    sendAdminOrderNotificationEmail(order),
+  const [customerAlreadySent, adminAlreadySent] = await Promise.all([
+    hasSuccessfulOrderEmail(order.id, "order_confirmation"),
+    hasSuccessfulOrderEmail(order.id, "admin_order_notification"),
   ]);
 
-  if (!customerResult.ok) {
-    console.error("Müşteri onay e-postası gönderilemedi:", customerResult.reason);
+  const tasks: Promise<{ ok: true } | { ok: false; reason: string }>[] = [];
+
+  if (!customerAlreadySent) {
+    tasks.push(sendOrderConfirmationEmail(order));
   }
-  if (!adminResult.ok) {
-    console.error("Admin sipariş bildirimi gönderilemedi:", adminResult.reason);
+  if (!adminAlreadySent) {
+    tasks.push(sendAdminOrderNotificationEmail(order));
+  }
+
+  if (tasks.length === 0) return;
+
+  const results = await Promise.all(tasks);
+  for (const result of results) {
+    if (!result.ok) {
+      console.error("Sipariş e-postası gönderilemedi:", result.reason);
+    }
   }
 }
 

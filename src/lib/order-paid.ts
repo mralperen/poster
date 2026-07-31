@@ -6,5 +6,5 @@ export async function handleOrderPaid(order: StoredOrder): Promise<void> {
   if (order.status !== "paid" && order.status !== "fulfilled") return;
 
   await createOrderNotification(order);
-  void sendOrderPaidEmails(order);
+  await sendOrderPaidEmails(order);
 }

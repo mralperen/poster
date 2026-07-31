@@ -44,6 +44,19 @@ export async function listEmailLogs(): Promise<EmailLogEntry[]> {
   );
 }
 
+export async function hasSuccessfulOrderEmail(
+  orderId: string,
+  type: EmailLogType,
+): Promise<boolean> {
+  const entries = await readAll();
+  return entries.some(
+    (entry) =>
+      entry.orderId === orderId &&
+      entry.type === type &&
+      entry.status === "sent",
+  );
+}
+
 export async function recordEmailLog(
   input: Omit<EmailLogEntry, "id" | "sentAt">,
 ): Promise<EmailLogEntry> {

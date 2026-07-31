@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ClearCartOnSuccess } from "@/components/ClearCartOnSuccess";
 import { OrderStatusPoller } from "@/components/OrderStatusPoller";
 import { getOrderById } from "@/lib/db/orders-store";
+import { handleOrderPaid } from "@/lib/order-paid";
 import { formatPrice } from "@/lib/format";
 
 type SuccessPageProps = {
@@ -18,6 +19,10 @@ export default async function CheckoutSuccessPage({
 
   const isPaid = order?.status === "paid" || order?.status === "fulfilled";
   const isPending = order?.status === "pending_payment";
+
+  if (isPaid && order) {
+    await handleOrderPaid(order);
+  }
 
   return (
     <div className="mx-auto max-w-lg px-6 py-16 text-center">

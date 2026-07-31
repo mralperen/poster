@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCartForm } from "@/components/AddToCartForm";
@@ -78,38 +77,13 @@ export default async function ProductPage({ params }: PageProps) {
           </Link>
 
           <div className="mt-5 grid min-w-0 gap-8 lg:mt-8 lg:grid-cols-2 lg:items-start lg:gap-12">
-            <div data-product-gallery className="min-w-0 flex gap-3 sm:gap-4">
-              <div
-                data-product-thumbnails
-                className="flex w-[68px] shrink-0 flex-col gap-2 sm:w-20"
-              >
-                {displayProduct.views.map((src, index) => (
-                  <div
-                    data-product-thumb
-                    key={`${src}-${index}`}
-                    className="relative aspect-[3/4] overflow-hidden rounded-[6px] border border-white/10 bg-zinc-950"
-                  >
-                    <Image
-                      src={src}
-                      alt={displayProduct.viewLabels[index]}
-                      width={160}
-                      height={213}
-                      loading="lazy"
-                      className="h-full w-full object-cover"
-                      sizes="80px"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <PosterScrubber
-                  views={displayProduct.views}
-                  viewLabels={displayProduct.viewLabels}
-                  alt={displayProduct.name}
-                  priority
-                />
-              </div>
+            <div data-product-gallery className="min-w-0">
+              <PosterScrubber
+                views={displayProduct.views}
+                viewLabels={displayProduct.viewLabels}
+                alt={displayProduct.name}
+                priority
+              />
             </div>
 
             <div id="purchase" className="min-w-0 lg:sticky lg:top-24">
