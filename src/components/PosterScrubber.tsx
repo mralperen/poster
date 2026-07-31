@@ -306,18 +306,18 @@ export function PosterScrubber({
           <div className="pointer-events-none absolute inset-0 rounded-[6px] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_0_44px_rgba(0,0,0,0.28)]" />
         </div>
 
-        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-4 py-3">
-          <span className="rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] font-medium tracking-wide text-white/80 uppercase backdrop-blur">
+        <div className="pointer-events-none absolute inset-x-0 top-0 flex items-center justify-between gap-2 bg-gradient-to-b from-black/60 to-transparent px-3 py-3 sm:px-4">
+          <span className="shrink-0 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] font-medium tracking-wide text-white/80 uppercase backdrop-blur">
             {viewCount} açı
           </span>
-          <span className="rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] font-medium tracking-wide text-amber-200 uppercase backdrop-blur">
+          <span className="max-w-[55%] truncate rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] font-medium tracking-wide text-amber-200 uppercase backdrop-blur">
             {currentLabel}
           </span>
         </div>
 
         {showSwipeCoach && (
           <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
-            <div className="swipe-coach min-w-44 rounded-full border border-white/15 bg-black/55 px-5 py-2.5 shadow-2xl shadow-black/45 backdrop-blur-md">
+            <div className="swipe-coach max-w-[min(18rem,calc(100%-1.5rem))] rounded-full border border-white/15 bg-black/55 px-4 py-2.5 shadow-2xl shadow-black/45 backdrop-blur-md sm:px-5">
               <div className="grid grid-cols-[38px_1fr] items-center gap-4">
                 <span className="swipe-touch" aria-hidden>
                   <span className="swipe-touch-core" />

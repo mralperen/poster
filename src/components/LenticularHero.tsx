@@ -65,17 +65,17 @@ export function LenticularHero({ products }: LenticularHeroProps) {
   };
 
   return (
-    <section className="relative isolate overflow-hidden bg-[#eef2f3] text-zinc-950">
+    <section className="relative isolate overflow-x-clip bg-[#eef2f3] text-zinc-950">
       <div className="lenticular-field absolute inset-0 opacity-70" />
       <div className="lens-sweep absolute inset-y-0 left-0 w-1/3 opacity-60" />
 
-      <div className="relative mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:py-12">
-        <div className="max-w-2xl">
-          <h1 className="max-w-[14ch] text-5xl font-semibold leading-[0.92] tracking-tight sm:text-7xl lg:text-8xl">
+      <div className="relative mx-auto grid min-h-[calc(100svh-72px)] max-w-7xl items-center gap-7 px-4 py-7 sm:gap-8 sm:px-6 sm:py-8 lg:grid-cols-[0.95fr_1.05fr] lg:gap-14 lg:py-12">
+        <div className="min-w-0 max-w-2xl">
+          <h1 className="max-w-[12ch] text-[2.55rem] font-semibold leading-[1.08] tracking-tight sm:max-w-[14ch] sm:text-6xl sm:leading-[1.02] lg:text-8xl lg:leading-[0.95]">
             Tek Çerçeve, Sonsuz Değişim.
           </h1>
 
-          <p className="mt-6 max-w-lg text-base leading-7 text-zinc-600 sm:text-lg">
+          <p className="mt-5 max-w-lg text-[0.95rem] leading-7 text-zinc-600 sm:mt-6 sm:text-lg">
             Durağan posterleri unut. Tek bir çerçevede birden fazla sahneyi canlı
             geçişini gör.
           </p>
@@ -96,18 +96,18 @@ export function LenticularHero({ products }: LenticularHeroProps) {
           </div>
         </div>
 
-        <div className="relative">
-          <div className="absolute -inset-x-4 top-8 h-24 border-y border-zinc-950/10 opacity-70" />
+        <div className="relative min-w-0">
+          <div className="pointer-events-none absolute inset-x-0 top-8 hidden h-24 border-y border-zinc-950/10 opacity-70 sm:block" />
 
-          <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1fr)_7.5rem] lg:items-stretch lg:gap-6">
-            <div className="poster-wood-frame relative min-w-0">
+          <div className="relative grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_7.5rem] lg:items-stretch lg:gap-6">
+            <div className="poster-wood-frame relative mx-auto w-full min-w-0 max-w-[440px] lg:mx-0 lg:max-w-none">
               <div className="poster-wood-frame__mat">
                 <PosterScrubber
                   key={selected.id}
                   views={selectedViews}
                   viewLabels={selected.viewLabels}
                   alt={selected.name}
-                  className="mx-auto max-w-[440px]"
+                  className="mx-auto w-full max-w-[440px]"
                   priority
                   woodFrame
                 />
@@ -115,8 +115,8 @@ export function LenticularHero({ products }: LenticularHeroProps) {
             </div>
 
             {products.length > 1 ? (
-              <aside className="hero-gallery-rail flex min-h-0 flex-col lg:h-full">
-                <div className="mb-3 hidden items-center justify-between lg:flex">
+              <aside className="hero-gallery-rail flex min-h-0 min-w-0 flex-col lg:h-full">
+                <div className="mb-2 flex items-center justify-between gap-3 lg:mb-3">
                   <p className="text-[11px] font-semibold tracking-[0.22em] text-zinc-500 uppercase">
                     Seç
                   </p>
@@ -148,7 +148,7 @@ export function LenticularHero({ products }: LenticularHeroProps) {
 
                 <div
                   ref={railRef}
-                  className="hero-gallery-rail__track flex gap-2.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:overflow-x-hidden lg:pb-0 [&::-webkit-scrollbar]:hidden"
+                  className="hero-gallery-rail__track -mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] lg:mx-0 lg:min-h-0 lg:flex-1 lg:flex-col lg:gap-2.5 lg:overflow-y-auto lg:overflow-x-hidden lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden"
                 >
                   {products.map((product, index) => {
                     const active = product.id === selected.id;
@@ -158,10 +158,10 @@ export function LenticularHero({ products }: LenticularHeroProps) {
                         type="button"
                         data-hero-thumb={product.id}
                         onClick={() => setSelectedId(product.id)}
-                        className={`hero-gallery-thumb group relative aspect-[3/4] w-[4.75rem] shrink-0 overflow-hidden rounded-[7px] text-left transition-[transform,opacity,box-shadow] duration-300 sm:w-[5.25rem] lg:w-full ${
+                        className={`hero-gallery-thumb group relative aspect-[3/4] w-[4.25rem] shrink-0 overflow-hidden rounded-[7px] text-left transition-[transform,opacity,box-shadow] duration-300 sm:w-[5rem] lg:w-full ${
                           active
-                            ? "z-10 opacity-100 shadow-[0_10px_28px_rgba(9,9,10,0.18)] ring-2 ring-zinc-950 ring-offset-2 ring-offset-[#eef2f3] lg:scale-[1.02]"
-                            : "opacity-45 hover:opacity-90"
+                            ? "z-10 border-2 border-zinc-950 opacity-100 shadow-[0_8px_22px_rgba(9,9,10,0.16)] lg:scale-[1.02]"
+                            : "border border-zinc-950/10 opacity-45 hover:opacity-90"
                         }`}
                         aria-label={`${product.name} ürününü göster`}
                         aria-current={active ? "true" : undefined}
@@ -198,30 +198,30 @@ export function LenticularHero({ products }: LenticularHeroProps) {
             ) : null}
           </div>
 
-          <div className="mt-5 flex items-end justify-between gap-4 border-t border-zinc-950/12 pt-4">
+          <div className="mt-5 grid gap-3 border-t border-zinc-950/12 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-4">
             <div className="min-w-0">
               <p className="text-[11px] font-medium tracking-[0.18em] text-zinc-500 uppercase">
                 Vitrin
               </p>
-              <h2 className="mt-1 truncate text-lg font-semibold text-zinc-950 sm:text-xl">
+              <h2 className="mt-1 text-base font-semibold leading-snug text-zinc-950 sm:truncate sm:text-xl">
                 {selected.name}
               </h2>
             </div>
-            <p className="shrink-0 text-xl font-bold tabular-nums text-zinc-950 sm:text-2xl">
+            <p className="text-xl font-bold tabular-nums text-zinc-950 sm:justify-self-end sm:text-2xl">
               {formatPrice(selected.basePrice)}
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 lg:hidden">
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:hidden">
             <Link
               href={`/product/${selected.slug}`}
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-semibold text-white sm:flex-none sm:px-6"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-full bg-zinc-950 px-5 text-sm font-semibold text-white"
             >
               Bu posteri incele
             </Link>
             <Link
               href="/shop"
-              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-full border border-zinc-950/20 px-5 text-sm font-semibold text-zinc-950 sm:flex-none sm:px-6"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-full border border-zinc-950/20 px-5 text-sm font-semibold text-zinc-950"
             >
               Koleksiyona bak
             </Link>
