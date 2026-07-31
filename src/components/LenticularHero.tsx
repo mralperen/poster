@@ -103,8 +103,7 @@ export function LenticularHero({ products }: LenticularHeroProps) {
             </h1>
 
             <p className="mt-5 max-w-md text-[0.95rem] leading-7 text-zinc-600 sm:mt-6 sm:text-base sm:leading-8">
-              Bakış açın değiştikçe poster başka bir kareye geçer. Ekran yok, pil
-              yok — tek bir A3 baskı.
+              Bakış açın değiştikçe poster başka bir kareye geçer.
             </p>
           </div>
 

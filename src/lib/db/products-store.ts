@@ -13,6 +13,14 @@ import {
 import type { PosterSize, Product } from "@/lib/types";
 
 const DATA_FILE = "data/products.json";
+const MIGRATIONS_FILE = "data/migrations.json";
+/** Tüm ürün çerçeveli fiyatını 1449 ₺ yap (tek seferlik, Blob katalogunda). */
+const ALL_PRICES_1449_MIGRATION = "all-base-price-1449-2026-07-31";
+const TARGET_BASE_PRICE = 1449;
+
+type MigrationsState = Record<string, boolean>;
+
+let priceMigrationPromise: Promise<void> | null = null;
 
 export type ProductInput = {
   name: string;
@@ -62,6 +70,78 @@ async function writeAll(products: Product[]): Promise<void> {
   await writeTextFile(DATA_FILE, JSON.stringify(products, null, 2));
 }
 
+async function readMigrations(): Promise<MigrationsState> {
+  const raw = await readTextFile(MIGRATIONS_FILE, { forceRefresh: true });
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as MigrationsState)
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function withBasePrice(product: Product, price: number): Product {
+  return {
+    ...product,
+    basePrice: price,
+    sizePrices: {
+      A3: price,
+      A2: price,
+      A1: price,
+    },
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+/** Admin kaydı Blob CDN cache yüzünden sitede eski fiyat bırakıyordu; bir kez tümünü 1449 yap. */
+async function ensureAllBasePricesMigrated(): Promise<void> {
+  if (priceMigrationPromise) return priceMigrationPromise;
+
+  priceMigrationPromise = (async () => {
+    try {
+      const migrations = await readMigrations();
+      if (migrations[ALL_PRICES_1449_MIGRATION]) return;
+
+      const products = await readAll({ forceRefresh: true });
+      if (products.length === 0) {
+        await writeTextFile(
+          MIGRATIONS_FILE,
+          `${JSON.stringify({ ...migrations, [ALL_PRICES_1449_MIGRATION]: true }, null, 2)}\n`,
+        );
+        return;
+      }
+
+      const updated = products.map((product) =>
+        withBasePrice(product, TARGET_BASE_PRICE),
+      );
+      await writeAll(updated);
+      await writeTextFile(
+        MIGRATIONS_FILE,
+        `${JSON.stringify({ ...migrations, [ALL_PRICES_1449_MIGRATION]: true }, null, 2)}\n`,
+      );
+    } catch {
+      // Migrasyon başarısızsa sonraki istekte tekrar dene; katalog okumayı engelleme.
+      priceMigrationPromise = null;
+    }
+  })();
+
+  return priceMigrationPromise;
+}
+
+export async function setAllProductBasePrices(price: number): Promise<Product[]> {
+  if (!Number.isFinite(price) || price < 0) {
+    throw new Error("Geçersiz fiyat.");
+  }
+
+  const products = await readAll({ forceRefresh: true });
+  const updated = products.map((product) => withBasePrice(product, price));
+  await writeAll(updated);
+  return updated;
+}
+
 function uploadRelativePath(id: string, slotIndex: number): string {
   return `uploads/${id}/view-${slotIndex}.jpg`;
 }
@@ -86,12 +166,14 @@ export async function productHasAllViews(product: Product): Promise<boolean> {
 export async function getProducts(options?: {
   publishedOnly?: boolean;
 }): Promise<Product[]> {
+  await ensureAllBasePricesMigrated();
   const products = await readAll();
   if (!options?.publishedOnly) return products;
   return products.filter((p) => p.published !== false);
 }
 
 export async function getPublishedProducts(): Promise<Product[]> {
+  await ensureAllBasePricesMigrated();
   const products = await readAll();
   return products.filter((product) => product.published !== false);
 }
@@ -100,6 +182,7 @@ export async function getProductById(
   id: string,
   options?: { forceRefresh?: boolean },
 ): Promise<Product | undefined> {
+  await ensureAllBasePricesMigrated();
   const products = await readAll({ forceRefresh: options?.forceRefresh });
   const hit = products.find((p) => p.id === id);
   if (hit) return hit;
@@ -114,6 +197,7 @@ export async function getProductBySlug(
   slug: string,
   options?: { forceRefresh?: boolean },
 ): Promise<Product | undefined> {
+  await ensureAllBasePricesMigrated();
   const products = await readAll({ forceRefresh: options?.forceRefresh });
   const hit = products.find((p) => p.slug === slug);
   if (hit) return hit;
@@ -246,7 +330,14 @@ export async function updateProduct(
 
   const updated: Product = {
     ...latest,
-    ...input,
+    ...(input.name !== undefined ? { name: input.name } : {}),
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(input.category !== undefined ? { category: input.category } : {}),
+    ...(input.badge !== undefined ? { badge: input.badge } : {}),
+    ...(input.basePrice !== undefined ? { basePrice: input.basePrice } : {}),
+    ...(input.sizePrices !== undefined ? { sizePrices: input.sizePrices } : {}),
+    ...(input.featured !== undefined ? { featured: input.featured } : {}),
+    ...(input.published !== undefined ? { published: input.published } : {}),
     slug: nextSlug,
     viewCount,
     viewLabels,

@@ -18,21 +18,21 @@
       "Sağ görünüm"
     ],
     "thumbnail": "/uploads/5ac1fd24-f2bb-4977-9725-63595a28122b/view-1.jpg",
-    "basePrice": 949,
+    "basePrice": 1449,
     "sizes": [
       "A3",
       "A2",
       "A1"
     ],
     "sizePrices": {
-      "A3": 949,
-      "A2": 949,
-      "A1": 949
+      "A3": 1449,
+      "A2": 1449,
+      "A1": 1449
     },
     "featured": true,
     "published": true,
     "createdAt": "2026-06-15T00:16:57.610Z",
-    "updatedAt": "2026-06-15T00:16:58.065Z"
+    "updatedAt": "2026-07-31T11:12:34.932Z"
   },
   {
     "id": "039b2d70-0e1e-46fa-8011-961aa6089387",
@@ -53,21 +53,21 @@
       "Sağ görünüm"
     ],
     "thumbnail": "/uploads/039b2d70-0e1e-46fa-8011-961aa6089387/view-1.jpg",
-    "basePrice": 949,
+    "basePrice": 1449,
     "sizes": [
       "A3",
       "A2",
       "A1"
     ],
     "sizePrices": {
-      "A3": 949,
-      "A2": 949,
-      "A1": 949
+      "A3": 1449,
+      "A2": 1449,
+      "A1": 1449
     },
     "featured": true,
     "published": true,
     "createdAt": "2026-06-15T03:46:11.726Z",
-    "updatedAt": "2026-06-15T03:46:32.144Z"
+    "updatedAt": "2026-07-31T11:12:34.932Z"
   },
   {
     "id": "1883b4ea-a5f5-451c-9791-2b694c0094da",
@@ -88,21 +88,21 @@
       "Sağ görünüm"
     ],
     "thumbnail": "/uploads/1883b4ea-a5f5-451c-9791-2b694c0094da/view-1.jpg",
-    "basePrice": 949,
+    "basePrice": 1449,
     "sizes": [
       "A3",
       "A2",
       "A1"
     ],
     "sizePrices": {
-      "A3": 949,
-      "A2": 949,
-      "A1": 949
+      "A3": 1449,
+      "A2": 1449,
+      "A1": 1449
     },
     "featured": true,
     "published": true,
     "createdAt": "2026-06-15T14:25:16.398Z",
-    "updatedAt": "2026-06-15T14:26:16.168Z"
+    "updatedAt": "2026-07-31T11:12:34.932Z"
   },
   {
     "id": "a6a7e474-91ff-4ee1-889c-e1147c2387b6",
@@ -123,21 +123,21 @@
       "Sağ görünüm"
     ],
     "thumbnail": "/uploads/a6a7e474-91ff-4ee1-889c-e1147c2387b6/view-1.jpg",
-    "basePrice": 949,
+    "basePrice": 1449,
     "sizes": [
       "A3",
       "A2",
       "A1"
     ],
     "sizePrices": {
-      "A3": 949,
-      "A2": 949,
-      "A1": 949
+      "A3": 1449,
+      "A2": 1449,
+      "A1": 1449
     },
     "featured": true,
     "published": true,
     "createdAt": "2026-06-15T14:30:58.948Z",
-    "updatedAt": "2026-06-15T14:31:11.192Z"
+    "updatedAt": "2026-07-31T11:12:34.932Z"
   },
   {
     "id": "76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54",
@@ -158,20 +158,20 @@
       "Sağ görünüm"
     ],
     "thumbnail": "/uploads/76dd3d7e-f5aa-47a7-8ddf-7630c97e7a54/view-1.jpg",
-    "basePrice": 949,
+    "basePrice": 1449,
     "sizes": [
       "A3",
       "A2",
       "A1"
     ],
     "sizePrices": {
-      "A3": 949,
-      "A2": 949,
-      "A1": 949
+      "A3": 1449,
+      "A2": 1449,
+      "A1": 1449
     },
     "featured": false,
     "published": true,
     "createdAt": "2026-06-15T14:35:13.995Z",
-    "updatedAt": "2026-06-15T14:35:16.258Z"
+    "updatedAt": "2026-07-31T11:12:34.932Z"
   }
 ]

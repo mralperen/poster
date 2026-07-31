@@ -19,13 +19,14 @@ function mediaUrlCache(): Map<string, string> {
 }
 
 const TEXT_CACHE_TTL_MS = 60_000;
-/** Katalog JSON: bellek cache süresi (Blob miss'lerini azaltır). */
-const CATALOG_CACHE_TTL_MS = 15 * 60_000;
+/** Katalog JSON: kısa bellek cache — fiyat/yayın değişiklikleri anında yansısın. */
+const CATALOG_CACHE_TTL_MS = 15_000;
 
 const CATALOG_FILES = new Set([
   "data/products.json",
   "data/site-content.json",
   "data/product-reviews.json",
+  "data/migrations.json",
 ]);
 
 function isCatalogFile(relativePath: string): boolean {
@@ -50,13 +51,19 @@ function isUploadPath(relativePath: string): boolean {
   return relativePath.replace(/^\//, "").startsWith("uploads/");
 }
 
-function blobPutOptions(contentType: string, access: "public" | "private") {
+function blobPutOptions(
+  contentType: string,
+  access: "public" | "private",
+  relativePath?: string,
+) {
+  // Katalog JSON 30 gün cache'lenince admin fiyat kaydı sitede görünmüyordu.
+  const isCatalog = relativePath ? isCatalogFile(relativePath) : false;
   return {
     access,
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType,
-    cacheControlMaxAge: 60 * 60 * 24 * 30,
+    cacheControlMaxAge: isCatalog ? 0 : 60 * 60 * 24 * 30,
   };
 }
 
@@ -163,8 +170,9 @@ export async function readTextFile(
 
   if (useBlobStorage()) {
     try {
+      // Katalogda CDN cache eski fiyatı 30 güne kadar tutabiliyordu; her zaman taze oku.
       const fromBlob = await readBlobText(normalized, {
-        useCache: !forceRefresh,
+        useCache: isCatalogFile(normalized) ? false : !forceRefresh,
       });
       if (fromBlob !== null) {
         cache.set(normalized, { value: fromBlob, expires: Date.now() + ttl });
@@ -207,6 +215,7 @@ export async function writeTextFile(
           ? "application/json"
           : "text/plain;charset=utf-8",
         "private",
+        normalized,
       ),
     );
     return;

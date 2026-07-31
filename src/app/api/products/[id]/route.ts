@@ -48,6 +48,27 @@ export async function PUT(request: Request, context: RouteContext) {
       published?: boolean;
     };
 
+    const basePrice =
+      body.basePrice === undefined ? undefined : Number(body.basePrice);
+    if (basePrice !== undefined && (!Number.isFinite(basePrice) || basePrice < 0)) {
+      return NextResponse.json({ error: "Geçersiz fiyat." }, { status: 400 });
+    }
+
+    const sizePrices =
+      body.priceA3 !== undefined
+        ? ({
+            A3: Number(body.priceA3),
+            A2: Number(body.priceA2 ?? body.priceA3),
+            A1: Number(body.priceA1 ?? body.priceA3),
+          } as Record<PosterSize, number>)
+        : basePrice !== undefined
+          ? ({
+              A3: basePrice,
+              A2: basePrice,
+              A1: basePrice,
+            } as Record<PosterSize, number>)
+          : undefined;
+
     const product = await updateProduct(id, {
       name: body.name,
       slug: body.slug,
@@ -56,15 +77,8 @@ export async function PUT(request: Request, context: RouteContext) {
       badge: body.badge,
       viewCount: body.viewCount,
       viewLabels: body.viewLabels,
-      basePrice: body.basePrice,
-      sizePrices:
-        body.priceA3 !== undefined
-          ? ({
-              A3: body.priceA3,
-              A2: body.priceA2!,
-              A1: body.priceA1!,
-            } as Record<PosterSize, number>)
-          : undefined,
+      basePrice,
+      sizePrices,
       featured: body.featured,
       published: body.published,
     });
@@ -73,6 +87,7 @@ export async function PUT(request: Request, context: RouteContext) {
     revalidatePath("/shop");
     revalidatePath("/admin");
     revalidatePath("/admin/products");
+    revalidatePath(`/admin/products/${product.id}/edit`);
     revalidatePath(`/product/${product.slug}`);
     return NextResponse.json(product);
   } catch (error) {

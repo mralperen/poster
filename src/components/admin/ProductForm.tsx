@@ -42,7 +42,7 @@ export function ProductForm({ product, mode }: ProductFormProps) {
   const [viewLabels, setViewLabels] = useState<string[]>(
     product?.viewLabels ?? defaultViewLabels(2),
   );
-  const [price, setPrice] = useState(product?.basePrice ?? 949);
+  const [price, setPrice] = useState(product?.basePrice ?? 1449);
   const [featured, setFeatured] = useState(product?.featured ?? false);
   const [published, setPublished] = useState(product?.published !== false);
 
@@ -315,6 +315,13 @@ export function ProductForm({ product, mode }: ProductFormProps) {
     setError("");
     setSuccess("");
 
+    const nextPrice = Number(price);
+    if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+      setError("Geçerli bir satış fiyatı girin.");
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       name,
       slug: slug || slugify(name),
@@ -323,10 +330,10 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       badge,
       viewCount,
       viewLabels,
-      basePrice: price,
-      priceA3: price,
-      priceA2: price,
-      priceA1: price,
+      basePrice: nextPrice,
+      priceA3: nextPrice,
+      priceA2: nextPrice,
+      priceA1: nextPrice,
       featured,
       published,
     };
@@ -370,13 +377,14 @@ export function ProductForm({ product, mode }: ProductFormProps) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Güncellenemedi.");
+      if (typeof data.basePrice === "number") setPrice(data.basePrice);
       setUploadedViews(
         data.views.map((view: string) => `${view.split("?")[0]}?v=${Date.now()}`),
       );
       if (typeof data.video === "string" && data.video) {
         setVideoSrc(`${data.video.split("?")[0]}?v=${Date.now()}`);
       }
-      setSuccess("Değişiklikler kaydedildi.");
+      setSuccess("Değişiklikler kaydedildi. Mağaza fiyatı güncellendi.");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bir hata oluştu.");
