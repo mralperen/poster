@@ -32,12 +32,28 @@ function StarRow({
   );
 }
 
-function ReviewCard({ review }: { review: HomepageReviewCard }) {
+function ReviewCard({
+  review,
+  featured = false,
+}: {
+  review: HomepageReviewCard;
+  featured?: boolean;
+}) {
   return (
-    <article className="flex h-full flex-col rounded-[10px] border border-white/10 bg-white/[0.02] p-4 transition-colors group-hover:border-white/20 group-hover:bg-white/[0.04] sm:p-5">
-      <StarRow rating={review.rating} />
+    <article
+      className={`flex h-full flex-col rounded-[10px] border border-white/10 bg-white/[0.02] transition-colors group-hover:border-white/20 group-hover:bg-white/[0.04] ${
+        featured ? "p-5 sm:p-7" : "p-4 sm:p-5"
+      }`}
+    >
+      <StarRow rating={review.rating} size={featured ? "lg" : "sm"} />
 
-      <p className="mt-3 line-clamp-4 flex-1 text-sm leading-6 text-zinc-300">
+      <p
+        className={`flex-1 text-zinc-300 ${
+          featured
+            ? "mt-4 line-clamp-6 max-w-3xl text-base leading-7 sm:text-lg sm:leading-8"
+            : "mt-3 line-clamp-4 text-sm leading-6"
+        }`}
+      >
         {review.body}
       </p>
 
@@ -46,14 +62,16 @@ function ReviewCard({ review }: { review: HomepageReviewCard }) {
           {review.images.slice(0, 3).map((src) => (
             <div
               key={src}
-              className="relative h-16 w-16 shrink-0 overflow-hidden rounded-[6px] border border-white/10 bg-zinc-950"
+              className={`relative shrink-0 overflow-hidden rounded-[6px] border border-white/10 bg-zinc-950 ${
+                featured ? "h-24 w-24" : "h-16 w-16"
+              }`}
             >
               <Image
                 src={src}
                 alt=""
                 fill
                 aria-hidden
-                sizes="64px"
+                sizes={featured ? "96px" : "64px"}
                 className="object-cover"
                 unoptimized={isUploadImageSrc(src)}
               />
@@ -144,11 +162,11 @@ export function HomepageReviews({
                   href={`/product/${review.productSlug}`}
                   className="group block"
                 >
-                  <ReviewCard review={review} />
+                  <ReviewCard review={review} featured={reviews.length === 1} />
                 </Link>
               ) : (
                 <div key={review.id} className="group">
-                  <ReviewCard review={review} />
+                  <ReviewCard review={review} featured={reviews.length === 1} />
                 </div>
               ),
             )}

@@ -4,8 +4,12 @@ import { HomepageReviews } from "@/components/HomepageReviews";
 import { LenticularHero } from "@/components/LenticularHero";
 import { ProductCard } from "@/components/ProductCard";
 import { TrustStrip } from "@/components/TrustStrip";
-import { averageRating, listPublishedReviews } from "@/lib/db/reviews-store";
-import { buildCustomerPhotos, buildHomepageReviews } from "@/lib/homepage-reviews";
+import { listPublishedReviews } from "@/lib/db/reviews-store";
+import {
+  buildCustomerPhotos,
+  buildHomepageReviews,
+  summarizeHomepageReviews,
+} from "@/lib/homepage-reviews";
 import { getFeaturedProducts, getPublishedProducts } from "@/lib/products";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +34,10 @@ export default async function Home() {
     reviews: publishedReviews,
     products,
     limit: 8,
+  });
+  const reviewSummary = summarizeHomepageReviews({
+    reviews: publishedReviews,
+    products,
   });
 
   return (
@@ -66,8 +74,8 @@ export default async function Home() {
 
       <HomepageReviews
         reviews={homepageReviews}
-        average={averageRating(publishedReviews)}
-        totalCount={publishedReviews.length}
+        average={reviewSummary.average}
+        totalCount={reviewSummary.count}
       />
       <CustomerWall photos={customerPhotos} />
       <TrustStrip />

@@ -126,6 +126,26 @@ export function buildHomepageReviews(input: {
 }
 
 /**
+ * Puan özeti anasayfada görünen yorumlarla aynı kümeden hesaplanmalı; yayından
+ * kaldırılmış ürünün yorumu sayıya girerse kart sayısıyla çelişir.
+ */
+export function summarizeHomepageReviews(input: {
+  reviews: ProductReview[];
+  products: Product[];
+}): { average: number; count: number } {
+  const productsById = new Map(input.products.map((product) => [product.id, product]));
+  const visible = input.reviews.filter((review) => {
+    if (!review.published) return false;
+    return productsById.get(review.productId)?.published === true;
+  });
+
+  if (visible.length === 0) return { average: 0, count: 0 };
+
+  const total = visible.reduce((sum, review) => sum + review.rating, 0);
+  return { average: total / visible.length, count: visible.length };
+}
+
+/**
  * Yayınlanmış yorumlardaki müşteri fotoğraflarını en yeniden başlayarak toplar.
  * Henüz fotoğraflı yorum yoksa boş döner — galeri bölümü kendini gizler.
  */
