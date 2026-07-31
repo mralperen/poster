@@ -144,7 +144,7 @@ type ReadTextOptions = {
 /**
  * JSON / metin oku.
  *
- * Katalog: bellek → Blob (15 dk cache) → lokal yedek.
+ * Katalog: bellek → Blob (CDN cache kapalı) → lokal yedek.
  * Lokal git kopyası admin yazılarından geride; Blob tercih edilir.
  * Sipariş / admin: bellek → Blob → lokal.
  */

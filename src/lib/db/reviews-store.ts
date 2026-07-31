@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import {
+  invalidateTextCache,
   rememberMediaUrl,
   readTextFile,
   writeBinaryFile,
@@ -24,8 +25,12 @@ export { MAX_REVIEW_IMAGES } from "@/lib/review-constants";
 
 const DATA_FILE = "data/product-reviews.json";
 
-async function readAll(): Promise<ProductReview[]> {
-  const raw = await readTextFile(DATA_FILE);
+async function readAll(options?: {
+  forceRefresh?: boolean;
+}): Promise<ProductReview[]> {
+  const raw = await readTextFile(DATA_FILE, {
+    forceRefresh: options?.forceRefresh,
+  });
   if (!raw) return [];
 
   try {
@@ -37,6 +42,7 @@ async function readAll(): Promise<ProductReview[]> {
 }
 
 async function writeAll(reviews: ProductReview[]): Promise<void> {
+  invalidateTextCache(DATA_FILE);
   await writeTextFile(DATA_FILE, `${JSON.stringify(reviews, null, 2)}\n`);
 }
 
@@ -46,24 +52,29 @@ function sortNewestFirst(reviews: ProductReview[]): ProductReview[] {
   );
 }
 
-export async function listProductReviews(productId: string): Promise<ProductReview[]> {
-  const reviews = await readAll();
+export async function listProductReviews(
+  productId: string,
+): Promise<ProductReview[]> {
+  const reviews = await readAll({ forceRefresh: true });
   return sortNewestFirst(
     reviews.filter((review) => review.productId === productId && review.published),
   );
 }
 
 export async function listPublishedReviews(): Promise<ProductReview[]> {
-  const reviews = await readAll();
+  const reviews = await readAll({ forceRefresh: true });
   return sortNewestFirst(reviews.filter((review) => review.published));
 }
 
 export async function listAllReviews(): Promise<ProductReview[]> {
-  return sortNewestFirst(await readAll());
+  // Admin paneli her zaman Blob'daki güncel kaydı görsün
+  return sortNewestFirst(await readAll({ forceRefresh: true }));
 }
 
-export async function getReviewById(id: string): Promise<ProductReview | undefined> {
-  const reviews = await readAll();
+export async function getReviewById(
+  id: string,
+): Promise<ProductReview | undefined> {
+  const reviews = await readAll({ forceRefresh: true });
   return reviews.find((review) => review.id === id);
 }
 
@@ -97,7 +108,8 @@ export async function createProductReview(input: {
   body: string;
   images?: string[];
 }): Promise<ProductReview> {
-  const reviews = await readAll();
+  // Stale okuma + yazma diğer instance'daki onay/silme işlemini eziyordu
+  const reviews = await readAll({ forceRefresh: true });
   const images = (input.images ?? [])
     .map((src) => src.split("?")[0] ?? "")
     .filter((src) => isValidReviewImagePath(input.productId, src))
@@ -124,7 +136,7 @@ export async function setReviewPublished(
   id: string,
   published: boolean,
 ): Promise<ProductReview | undefined> {
-  const reviews = await readAll();
+  const reviews = await readAll({ forceRefresh: true });
   const index = reviews.findIndex((review) => review.id === id);
   if (index === -1) return undefined;
 
@@ -134,7 +146,7 @@ export async function setReviewPublished(
 }
 
 export async function deleteReview(id: string): Promise<boolean> {
-  const reviews = await readAll();
+  const reviews = await readAll({ forceRefresh: true });
   const next = reviews.filter((review) => review.id !== id);
   if (next.length === reviews.length) return false;
   await writeAll(next);
