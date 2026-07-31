@@ -10,8 +10,6 @@ import type { Product } from "@/lib/types";
 
 type LenticularHeroProps = {
   products: Product[];
-  rating?: number;
-  ratingCount?: number;
 };
 
 const SCENE_WORDS: Record<number, string> = {
@@ -28,11 +26,7 @@ function fallbackViewLabels(count: number): string[] {
   );
 }
 
-export function LenticularHero({
-  products,
-  rating = 0,
-  ratingCount = 0,
-}: LenticularHeroProps) {
+export function LenticularHero({ products }: LenticularHeroProps) {
   const [selectedId, setSelectedId] = useState(products[0]?.id ?? "");
   const railRef = useRef<HTMLDivElement>(null);
   const selected =
@@ -90,106 +84,67 @@ export function LenticularHero({
     if (next) setSelectedId(next.id);
   };
 
-  const badges = [
-    ratingCount > 0
-      ? `${rating.toLocaleString("tr-TR", { minimumFractionDigits: 1 })} · ${ratingCount} değerlendirme`
-      : null,
-    "3 al 2 öde",
-    "Korumalı kargo",
-    "A3 sabit ölçü",
-  ].filter((badge): badge is string => badge !== null);
-
   return (
-    <section className="relative isolate overflow-x-clip bg-[#09090a] text-white">
+    <section className="relative isolate overflow-x-clip bg-[#eef2f3] text-zinc-950">
       <div className="hero-lens-grid pointer-events-none absolute inset-0" />
       <div className="hero-spotlight pointer-events-none absolute inset-0" />
 
       <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-4 pt-9 pb-14 sm:gap-9 sm:px-6 sm:pt-12 lg:grid lg:min-h-[calc(100svh-72px)] lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-14 lg:pt-10 lg:pb-16">
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-9">
           <div className="order-1 min-w-0 lg:order-none">
-            <p className="text-[11px] font-semibold tracking-[0.26em] text-amber-300 uppercase">
+            <p className="text-[11px] font-semibold tracking-[0.26em] text-zinc-500 uppercase">
               3D Lentiküler Poster · A3
             </p>
 
-            <h1 className="mt-4 text-[2.6rem] font-semibold leading-[1.03] tracking-tight sm:text-6xl lg:text-7xl xl:text-[5.25rem]">
+            <h1 className="mt-4 text-[2.7rem] font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl xl:text-[5.5rem]">
               Tek baskı.
               <br />
-              <span className="text-amber-200">{sceneWord} sahne.</span>
+              {sceneWord} sahne.
             </h1>
 
-            <p className="mt-5 max-w-xl text-[0.95rem] leading-7 text-zinc-400 sm:mt-6 sm:text-base sm:leading-8">
-              Lentiküler lens sayesinde bakış açın değiştikçe poster başka bir
-              kareye geçer. Ekran yok, pil yok, kablo yok — duvara asılan tek bir
-              baskı. Posteri sürükle, geçişi satın almadan önce kendin gör.
+            <p className="mt-5 max-w-md text-[0.95rem] leading-7 text-zinc-600 sm:mt-6 sm:text-base sm:leading-8">
+              Bakış açın değiştikçe poster başka bir kareye geçer. Ekran yok, pil
+              yok — tek bir A3 baskı.
             </p>
           </div>
 
           <div className="order-3 min-w-0 lg:order-none">
-            <div className="rounded-[12px] border border-white/10 bg-white/[0.025] p-4 sm:p-5">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-[11px] font-semibold tracking-[0.2em] text-amber-300 uppercase">
-                  Nasıl çalışır
-                </p>
-                <p className="min-w-0 truncate text-[11px] text-zinc-500">
-                  {selected.name}
-                </p>
-              </div>
+            <p className="text-[11px] font-semibold tracking-[0.2em] text-zinc-500 uppercase">
+              Aynı baskı, {viewCount} açı
+            </p>
 
-              <div className="mt-4 flex items-center gap-2 sm:gap-2.5">
-                {selectedViews.map((src, index) => (
-                  <Fragment key={`${src}-${index}`}>
-                    {index > 0 ? <AngleArrow /> : null}
-                    <div className="relative aspect-[3/4] w-[4.5rem] shrink-0 overflow-hidden rounded-[6px] border border-white/12 bg-zinc-950 sm:w-[5.25rem]">
-                      <Image
-                        src={src}
-                        alt={`${selected.name} — ${viewLabels[index]}`}
-                        fill
-                        sizes="84px"
-                        className="object-cover"
-                        unoptimized={isUploadImageSrc(selected.views[index] ?? "")}
-                      />
-                      <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/90 to-transparent px-1.5 pt-5 pb-1 text-[9px] font-medium tracking-wide text-zinc-200 uppercase">
-                        {viewLabels[index]}
-                      </span>
-                    </div>
-                  </Fragment>
-                ))}
-              </div>
-
-              <p className="mt-4 text-xs leading-5 text-zinc-400 sm:text-[13px] sm:leading-6">
-                Yukarıdaki kareler aynı posterin farklı açılardan görünümü. Odada
-                hareket ettikçe baskı bu sahneler arasında kendiliğinden geçiş
-                yapar.
-              </p>
-            </div>
-
-            <ul className="mt-5 flex flex-wrap items-center gap-2">
-              {badges.map((badge, index) => (
-                <li
-                  key={badge}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11px] text-zinc-400 sm:text-xs"
-                >
-                  {index === 0 && ratingCount > 0 ? (
-                    <span className="text-amber-300" aria-hidden>
-                      ★
+            <div className="mt-3 flex items-center gap-2 sm:gap-3">
+              {selectedViews.map((src, index) => (
+                <Fragment key={`${src}-${index}`}>
+                  {index > 0 ? <AngleArrow /> : null}
+                  <div className="relative aspect-[3/4] w-[4.75rem] shrink-0 overflow-hidden rounded-[6px] border border-zinc-950/10 bg-zinc-900 shadow-[0_4px_14px_rgba(9,9,10,0.12)] sm:w-[5.5rem]">
+                    <Image
+                      src={src}
+                      alt={`${selected.name} — ${viewLabels[index]}`}
+                      fill
+                      sizes="88px"
+                      className="object-cover"
+                      unoptimized={isUploadImageSrc(selected.views[index] ?? "")}
+                    />
+                    <span className="absolute inset-x-0 bottom-0 truncate bg-gradient-to-t from-black/90 to-transparent px-1.5 pt-5 pb-1 text-[9px] font-medium tracking-wide text-zinc-100 uppercase">
+                      {viewLabels[index]}
                     </span>
-                  ) : null}
-                  {badge}
-                </li>
+                  </div>
+                </Fragment>
               ))}
-            </ul>
+            </div>
           </div>
 
           <div className="order-4 flex min-w-0 flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center lg:order-none">
             <Link
               href={`/product/${selected.slug}`}
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-amber-300 px-6 text-sm font-semibold text-zinc-950 transition-transform hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 active:translate-y-0"
             >
               Bu posteri incele
             </Link>
             <Link
               href="/shop"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/15 px-6 text-sm font-semibold text-zinc-200 transition-colors hover:border-white/35 hover:text-white"
+              className="inline-flex min-h-12 items-center justify-center rounded-full border border-zinc-950/20 px-6 text-sm font-semibold text-zinc-950 transition-colors hover:border-zinc-950/40 hover:bg-white/60"
             >
               Tüm koleksiyon
             </Link>
@@ -223,7 +178,7 @@ export function LenticularHero({
                   </p>
                   <p className="font-mono text-[10px] tabular-nums text-zinc-500">
                     {String(selectedIndex + 1).padStart(2, "0")}
-                    <span className="text-zinc-700"> / </span>
+                    <span className="text-zinc-400"> / </span>
                     {String(products.length).padStart(2, "0")}
                   </p>
                 </div>
@@ -232,7 +187,7 @@ export function LenticularHero({
                   <button
                     type="button"
                     onClick={() => selectByOffset(-1)}
-                    className="flex h-7 flex-1 items-center justify-center rounded-[6px] border border-white/10 bg-white/[0.04] text-zinc-400 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white"
+                    className="flex h-7 flex-1 items-center justify-center rounded-[6px] border border-zinc-950/12 bg-white/50 text-zinc-700 transition-colors hover:border-zinc-950/25 hover:bg-white"
                     aria-label="Önceki poster"
                   >
                     <Chevron direction="up" />
@@ -240,7 +195,7 @@ export function LenticularHero({
                   <button
                     type="button"
                     onClick={() => selectByOffset(1)}
-                    className="flex h-7 flex-1 items-center justify-center rounded-[6px] border border-white/10 bg-white/[0.04] text-zinc-400 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white"
+                    className="flex h-7 flex-1 items-center justify-center rounded-[6px] border border-zinc-950/12 bg-white/50 text-zinc-700 transition-colors hover:border-zinc-950/25 hover:bg-white"
                     aria-label="Sonraki poster"
                   >
                     <Chevron direction="down" />
@@ -261,8 +216,8 @@ export function LenticularHero({
                         onClick={() => setSelectedId(product.id)}
                         className={`hero-gallery-thumb group relative aspect-[3/4] w-[4rem] shrink-0 overflow-hidden rounded-[7px] text-left transition-[transform,opacity,box-shadow] duration-300 sm:w-[4.75rem] lg:w-full ${
                           active
-                            ? "z-10 border-2 border-amber-300 opacity-100 shadow-[0_8px_22px_rgba(0,0,0,0.5)] lg:scale-[1.02]"
-                            : "border border-white/10 opacity-40 hover:opacity-90"
+                            ? "z-10 border-2 border-zinc-950 opacity-100 shadow-[0_8px_22px_rgba(9,9,10,0.16)] lg:scale-[1.02]"
+                            : "border border-zinc-950/10 opacity-45 hover:opacity-90"
                         }`}
                         aria-label={`${product.name} ürününü göster`}
                         aria-current={active ? "true" : undefined}
@@ -277,13 +232,13 @@ export function LenticularHero({
                           unoptimized={isUploadImageSrc(product.thumbnail)}
                         />
                         <span
-                          className={`absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent transition-opacity ${
+                          className={`absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent transition-opacity ${
                             active ? "opacity-100" : "opacity-70"
                           }`}
                         />
                         <span
                           className={`absolute bottom-1.5 left-1.5 font-mono text-[10px] font-semibold tracking-wide ${
-                            active ? "text-amber-200" : "text-white/70"
+                            active ? "text-white" : "text-white/80"
                           }`}
                         >
                           {String(index + 1).padStart(2, "0")}
@@ -296,16 +251,16 @@ export function LenticularHero({
             ) : null}
           </div>
 
-          <div className="mt-5 grid gap-2 border-t border-white/10 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-4">
+          <div className="mt-5 grid gap-2 border-t border-zinc-950/12 pt-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end sm:gap-4">
             <div className="min-w-0">
               <p className="text-[10px] font-medium tracking-[0.2em] text-zinc-500 uppercase">
                 Vitrinde
               </p>
-              <h2 className="mt-1 text-base font-semibold leading-snug text-white sm:truncate sm:text-xl">
+              <h2 className="mt-1 text-base font-semibold leading-snug text-zinc-950 sm:truncate sm:text-xl">
                 {selected.name}
               </h2>
             </div>
-            <p className="text-xl font-bold tabular-nums text-white sm:justify-self-end sm:text-2xl">
+            <p className="text-xl font-bold tabular-nums text-zinc-950 sm:justify-self-end sm:text-2xl">
               {formatPrice(selected.basePrice)}
             </p>
           </div>
@@ -313,7 +268,7 @@ export function LenticularHero({
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-5 hidden justify-center lg:flex">
-        <span className="hero-scroll-cue flex flex-col items-center gap-1.5 text-[10px] font-medium tracking-[0.24em] text-zinc-500 uppercase">
+        <span className="hero-scroll-cue flex flex-col items-center gap-1.5 text-[10px] font-medium tracking-[0.24em] text-zinc-400 uppercase">
           Koleksiyon
           <Chevron direction="down" />
         </span>
@@ -330,7 +285,7 @@ function AngleArrow() {
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden
-      className="shrink-0 text-zinc-600"
+      className="shrink-0 text-zinc-400"
     >
       <path
         d="M9 6l6 6-6 6"

@@ -101,11 +101,11 @@ a {
 /* Hero zemini — lens çizgileri ve ince ızgara, kenarlara doğru eriyor */
 .hero-lens-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(rgba(9, 9, 10, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(9, 9, 10, 0.07) 1px, transparent 1px),
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.02) 0 1px,
+      rgba(9, 9, 10, 0.045) 0 1px,
       transparent 1px 9px
     );
   background-size:
@@ -115,42 +115,31 @@ a {
   mask-image: radial-gradient(
     ellipse 120% 92% at 50% 28%,
     #000 18%,
-    transparent 78%
+    transparent 80%
   );
 }
 
-/* Posteri aydınlatan sıcak spot */
+/* Posteri öne çıkaran yumuşak ışık */
 .hero-spotlight {
-  background:
-    radial-gradient(
-      ellipse 90% 48% at 50% 40%,
-      rgba(251, 191, 36, 0.12),
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 80% 40% at 50% 6%,
-      rgba(255, 255, 255, 0.05),
-      transparent 72%
-    );
+  background: radial-gradient(
+    ellipse 90% 46% at 50% 40%,
+    rgba(255, 255, 255, 0.75),
+    transparent 72%
+  );
 }
 
 @media (min-width: 1024px) {
   .hero-spotlight {
     background:
       radial-gradient(
-        ellipse 62% 58% at 73% 42%,
-        rgba(251, 191, 36, 0.13),
-        transparent 68%
-      ),
-      radial-gradient(
-        ellipse 48% 44% at 78% 34%,
-        rgba(255, 255, 255, 0.07),
+        ellipse 58% 60% at 73% 44%,
+        rgba(255, 255, 255, 0.8),
         transparent 70%
       ),
       radial-gradient(
-        ellipse 70% 55% at 12% 6%,
-        rgba(255, 255, 255, 0.04),
-        transparent 72%
+        ellipse 60% 50% at 10% 8%,
+        rgba(255, 255, 255, 0.45),
+        transparent 74%
       );
   }
 }
@@ -169,25 +158,25 @@ a {
   border-radius: 50%;
   background: radial-gradient(
     ellipse at 50% 42%,
-    rgba(255, 236, 190, 0.17),
-    rgba(251, 191, 36, 0.06) 46%,
-    transparent 72%
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0.35) 48%,
+    transparent 74%
   );
   filter: blur(6px);
 }
 
 .hero-stage::after {
-  right: 9%;
-  bottom: -20px;
-  left: 9%;
-  height: 26px;
+  right: 10%;
+  bottom: -18px;
+  left: 10%;
+  height: 24px;
   border-radius: 999px;
   background: radial-gradient(
     ellipse at center,
-    rgba(0, 0, 0, 0.72),
+    rgba(9, 9, 10, 0.3),
     transparent 70%
   );
-  filter: blur(9px);
+  filter: blur(10px);
 }
 
 .hero-scroll-cue {
